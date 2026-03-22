@@ -81,7 +81,7 @@ Padronizar a variável principal de URL para a biblioteca de autenticação:
 AUTH_SECRET="..."
 AUTH_GOOGLE_ID="..."
 AUTH_GOOGLE_SECRET="..."
-AUTH_URL="http://localhost:3050"
+AUTH_URL="http://localhost:3000"
 AUTH_TRUST_HOST=true
 ```
 
@@ -90,12 +90,12 @@ AUTH_TRUST_HOST=true
 Nesta base, a porta local do projeto esta configurada por:
 
 ```env
-NEXT_PORT_LOCAL=3050
+NEXT_PORT_LOCAL=3000
 ```
 
 Isso significa que a aplicacao local deve responder em:
 
-- `http://localhost:3050`
+- `http://localhost:3000`
 
 Se o projeto mudar de porta, voce precisa alinhar ao mesmo tempo:
 
@@ -106,7 +106,7 @@ Se o projeto mudar de porta, voce precisa alinhar ao mesmo tempo:
 - origem local no Google Console
 - callback local no Google Console
 
-Se uma dessas partes ficar em `3000` e outra em `3050`, o login pode falhar com `redirect_uri_mismatch`.
+Se uma dessas partes ficar em uma porta e outra em uma porta diferente, o login pode falhar com `redirect_uri_mismatch`.
 
 ## Passo 4 - Google Console
 
@@ -121,12 +121,12 @@ No Google Cloud Console, precisamos:
 
 ### Origens autorizadas deste projeto
 
-- `http://localhost:3050`
+- `http://localhost:3000`
 - `https://next-auth-cyan-three.vercel.app`
 
 ### Callbacks autorizados deste projeto
 
-- `http://localhost:3050/api/auth/callback/google`
+- `http://localhost:3000/api/auth/callback/google`
 - `https://next-auth-cyan-three.vercel.app/api/auth/callback/google`
 
 ### Regra principal
@@ -141,8 +141,8 @@ O erro que mais facilmente aparece quando trocamos a porta local e esquecemos o 
 
 Exemplo real de conflito:
 
-- aplicacao local rodando em `http://localhost:3050`
-- Google Console ainda cadastrado com `http://localhost:3000`
+- aplicacao local rodando em `http://localhost:3000`
+- Google Console ainda cadastrado com outra porta ou callback diferente
 
 Nesse caso, o Google bloqueia o login porque entende que o callback enviado pelo app nao corresponde ao callback autorizado.
 
@@ -155,6 +155,54 @@ Se a porta local mudar, revise imediatamente:
 3. origem local no Google Console
 4. callback local no Google Console
 5. URL que voce esta abrindo no navegador
+
+## Passo 4.1 - Deploy Vercel
+
+Quando a aplicacao sair do ambiente local e for para a Vercel, alguns pontos precisam estar alinhados ao mesmo tempo.
+
+### Resumo dos 7 pontos importantes do `.env.local`
+
+1. `NEXTAUTH_EXTERNO_URL`
+   Linha de referencia da URL publicada.
+
+2. `NEXTAUTH_URL` e `AUTH_URL`
+   Na Vercel, devem usar a URL publica `https://next-auth-cyan-three.vercel.app`.
+
+3. `AUTH_SECRET`
+   Precisa existir na Vercel com o mesmo valor esperado pela autenticacao.
+
+4. `NEXTAUTH_SECRET`
+   Tambem precisa existir na Vercel para compatibilidade com `next-auth` v4.
+
+5. `AUTH_TRUST_HOST`
+   Recomendado manter como `true` na Vercel.
+
+6. `AUTH_GOOGLE_ID`
+   Precisa estar cadastrado na Vercel.
+
+7. `AUTH_GOOGLE_SECRET`
+   Precisa estar cadastrado na Vercel.
+
+### O que nao sobe para a Vercel
+
+- `NEXT_PORT_LOCAL`
+- `NEXTAUTH_LOCAL_URL`
+
+Essas variaveis fazem sentido apenas no desenvolvimento local.
+
+### Checklist de deploy
+
+Antes de testar producao, revise:
+
+1. Variaveis da Vercel cadastradas
+2. URL publica correta em `NEXTAUTH_URL`
+3. URL publica correta em `AUTH_URL`
+4. Origem publicada no Google Console
+5. Callback publicado no Google Console
+
+### Risco mais comum no deploy
+
+Se a Vercel estiver usando a URL publicada correta, mas o Google Console ainda estiver incompleto, o login tambem pode falhar mesmo com tudo certo no codigo.
 
 ## Passo 5 - Fluxo da aplicação
 
@@ -313,8 +361,8 @@ A URI cadastrada no Google está diferente da URI usada pela aplicação.
 
 Causa comum nesta base:
 
-- projeto rodando em `3050`
-- Google Console ainda configurado com `3000`
+- projeto rodando em uma porta diferente da configurada
+- Google Console ainda configurado com outra porta
 
 ### `invalid_client`
 
