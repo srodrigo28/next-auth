@@ -31,12 +31,6 @@ export default async function Home() {
                   : "Entrar na conta"
                 : "Ver configuracao de login"}
             </Link>
-            <Link
-              href="/docs/next-google-auth.html"
-              className="rounded-full border border-white/15 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:border-sky-400 hover:text-sky-300"
-            >
-              Ver treinamento
-            </Link>
           </div>
         </div>
 
