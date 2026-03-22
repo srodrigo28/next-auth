@@ -66,11 +66,10 @@ No projeto atual, essa etapa já está atendida, porque a aplicação já existe
 
 Hoje o projeto já possui:
 
-- `AUTH_SECRET`
+- `NEXTAUTH_SECRET`
 - `AUTH_GOOGLE_ID`
 - `AUTH_GOOGLE_SECRET`
-- `NEXTAUTH_LOCAL_URL`
-- `NEXTAUTH_EXTERNO_URL`
+- `NEXTAUTH_URL`
 - `NEXT_PORT_LOCAL`
 
 ### Ajuste esperado
@@ -78,10 +77,10 @@ Hoje o projeto já possui:
 Padronizar a variável principal de URL para a biblioteca de autenticação:
 
 ```env
-AUTH_SECRET="..."
+NEXTAUTH_SECRET="..."
 AUTH_GOOGLE_ID="..."
 AUTH_GOOGLE_SECRET="..."
-AUTH_URL="http://localhost:3000"
+NEXTAUTH_URL="http://localhost:3000"
 AUTH_TRUST_HOST=true
 ```
 
@@ -100,9 +99,7 @@ Isso significa que a aplicacao local deve responder em:
 Se o projeto mudar de porta, voce precisa alinhar ao mesmo tempo:
 
 - `NEXT_PORT_LOCAL`
-- `NEXTAUTH_LOCAL_URL`
 - `NEXTAUTH_URL`
-- `AUTH_URL`
 - origem local no Google Console
 - callback local no Google Console
 
@@ -122,12 +119,12 @@ No Google Cloud Console, precisamos:
 ### Origens autorizadas deste projeto
 
 - `http://localhost:3000`
-- `https://next-auth-cyan-three.vercel.app`
+- `https://next-auth-omega-two.vercel.app`
 
 ### Callbacks autorizados deste projeto
 
 - `http://localhost:3000/api/auth/callback/google`
-- `https://next-auth-cyan-three.vercel.app/api/auth/callback/google`
+- `https://next-auth-omega-two.vercel.app/api/auth/callback/google`
 
 ### Regra principal
 
@@ -162,31 +159,24 @@ Quando a aplicacao sair do ambiente local e for para a Vercel, alguns pontos pre
 
 ### Resumo dos 7 pontos importantes do `.env.local`
 
-1. `NEXTAUTH_EXTERNO_URL`
-   Linha de referencia da URL publicada.
+1. `NEXTAUTH_URL`
+   Na Vercel, deve usar a URL publica `https://next-auth-omega-two.vercel.app`.
 
-2. `NEXTAUTH_URL` e `AUTH_URL`
-   Na Vercel, devem usar a URL publica `https://next-auth-cyan-three.vercel.app`.
-
-3. `AUTH_SECRET`
-   Precisa existir na Vercel com o mesmo valor esperado pela autenticacao.
-
-4. `NEXTAUTH_SECRET`
+2. `NEXTAUTH_SECRET`
    Tambem precisa existir na Vercel para compatibilidade com `next-auth` v4.
 
-5. `AUTH_TRUST_HOST`
+3. `AUTH_TRUST_HOST`
    Recomendado manter como `true` na Vercel.
 
-6. `AUTH_GOOGLE_ID`
+4. `AUTH_GOOGLE_ID`
    Precisa estar cadastrado na Vercel.
 
-7. `AUTH_GOOGLE_SECRET`
+5. `AUTH_GOOGLE_SECRET`
    Precisa estar cadastrado na Vercel.
 
 ### O que nao sobe para a Vercel
 
 - `NEXT_PORT_LOCAL`
-- `NEXTAUTH_LOCAL_URL`
 
 Essas variaveis fazem sentido apenas no desenvolvimento local.
 
@@ -196,9 +186,8 @@ Antes de testar producao, revise:
 
 1. Variaveis da Vercel cadastradas
 2. URL publica correta em `NEXTAUTH_URL`
-3. URL publica correta em `AUTH_URL`
-4. Origem publicada no Google Console
-5. Callback publicado no Google Console
+3. Origem publicada no Google Console
+4. Callback publicado no Google Console
 
 ### Risco mais comum no deploy
 
@@ -379,7 +368,7 @@ Normalmente:
 
 Normalmente:
 
-- `AUTH_SECRET` ausente
+- `NEXTAUTH_SECRET` ausente
 - configuração de auth incompleta
 - sessão sendo lida da forma errada
 

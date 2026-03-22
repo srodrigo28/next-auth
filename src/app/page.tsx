@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAuthSession } from "@/auth";
+import { getAuthSession, isAuthConfigured } from "@/auth";
 
 export default async function Home() {
   const session = await getAuthSession();
@@ -22,10 +22,14 @@ export default async function Home() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
-              href={session ? "/dashboard" : "/login"}
+              href={isAuthConfigured ? (session ? "/dashboard" : "/login") : "/login"}
               className="rounded-full bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-400"
             >
-              {session ? "Abrir dashboard" : "Entrar na conta"}
+              {isAuthConfigured
+                ? session
+                  ? "Abrir dashboard"
+                  : "Entrar na conta"
+                : "Ver configuracao de login"}
             </Link>
             <Link
               href="/docs/next-google-auth.html"
@@ -40,7 +44,10 @@ export default async function Home() {
           <h2 className="text-lg font-bold text-white">Status atual</h2>
           <div className="mt-5 space-y-3 text-sm leading-7 text-slate-300">
             <p>Projeto Next.js com App Router.</p>
-            <p>Login Google configurado com `next-auth`.</p>
+            <p>
+              Login Google{" "}
+              {isAuthConfigured ? "configurado com `next-auth`." : "aguardando variaveis no deploy."}
+            </p>
             <p>Dashboard protegido por middleware.</p>
             <p>Botao para atualizar perfil e sair.</p>
           </div>

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAuthSession } from "@/auth";
+import { getAuthSession, isAuthConfigured } from "@/auth";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 
 export default async function LoginPage() {
@@ -22,8 +22,15 @@ export default async function LoginPage() {
           Esta tela centraliza a autenticacao do projeto. Depois do login, voce sera
           redirecionado para o dashboard.
         </p>
+        {!isAuthConfigured ? (
+          <p className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm leading-7 text-amber-100">
+            A autenticacao nao esta configurada neste ambiente. Verifique as variaveis
+            `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `AUTH_GOOGLE_ID` e
+            `AUTH_GOOGLE_SECRET` no deploy.
+          </p>
+        ) : null}
         <div className="mt-8 flex justify-center">
-          <GoogleSignInButton />
+          <GoogleSignInButton disabled={!isAuthConfigured} />
         </div>
       </section>
     </main>

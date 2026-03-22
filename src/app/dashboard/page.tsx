@@ -1,8 +1,12 @@
 import { redirect } from "next/navigation";
-import { getAuthSession } from "@/auth";
+import { getAuthSession, isAuthConfigured } from "@/auth";
 import { DashboardActions } from "@/components/auth/dashboard-actions";
 
 export default async function DashboardPage() {
+  if (!isAuthConfigured) {
+    redirect("/login");
+  }
+
   const session = await getAuthSession();
 
   if (!session?.user) {
