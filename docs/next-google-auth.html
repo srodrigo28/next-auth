@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Guia Next.js com Google Auth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: "var(--color-base)",
+            accent: "var(--color-accent)",
+            text: "var(--color-text)",
+            muted: "var(--color-muted)",
+            card: "var(--color-card)",
+            border: "var(--color-border)",
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          }
+        },
+      },
+    };
+  </script>
+  <style>
+    :root {
+      --color-base: #07111f;
+      --color-accent: #22c55e;
+      --color-text: #f0fdf4;
+      --color-muted: #94a3b8;
+      --color-card: #0f1c2f;
+      --color-border: #1f3352;
+    }
+    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--color-accent) rgba(15, 23, 42, 0.55); }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+      background-image:
+        radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.12), transparent 24%),
+        linear-gradient(180deg, #07111f 0%, #081221 40%, #091524 100%);
+    }
+    .bg-pattern {
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(8, 18, 33, 0.9); }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.95), rgba(14, 165, 233, 0.9));
+      border-radius: 999px;
+      border: 2px solid rgba(8, 18, 33, 0.9);
+    }
+    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(74, 222, 128, 1), rgba(56, 189, 248, 1)); }
+    pre {
+      background-color: #020817;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      overflow-x: auto;
+      border: 1px solid var(--color-border);
+      margin: 0;
+    }
+    code { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; color: #dbeafe; }
+    .step-content { display: none; animation: fadeIn 0.35s ease-in-out; }
+    .step-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .nav-item.active { background-color: var(--color-accent); color: white; border-color: var(--color-accent); }
+    .nav-group-content { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.22s ease; }
+    .nav-group.open .nav-group-content { grid-template-rows: 1fr; }
+    .nav-group-inner { overflow: hidden; }
+    .nav-group-toggle .chevron { transition: transform 0.22s ease; }
+    .nav-group.open .nav-group-toggle .chevron { transform: rotate(180deg); }
+    #sidebar-drawer { position: fixed; inset: 0 auto 0 0; z-index: 40; width: min(20rem, 86vw); transform: translateX(-100%); transition: transform 0.25s cubic-bezier(.4, 0, .2, 1); }
+    #sidebar-drawer.open { transform: translateX(0); }
+    @media (min-width: 768px) { #sidebar-drawer { position: static; width: 18rem; height: 100vh; transform: translateX(0); } }
+    .soft-card { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)); backdrop-filter: blur(8px); }
+    .py-key { color: #4ade80; font-weight: 700; }
+    .py-fn { color: #60a5fa; }
+    .py-str { color: #fbbf24; }
+    .code-action-btn, .learn-more-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 0.95rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.2);
+      color: #f0fdf4;
+      font-size: 0.8rem;
+      font-weight: 700;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .code-action-btn { background: rgba(15,23,42,0.75); color: #cbd5e1; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 600; }
+    .learn-more-btn {
+      border-color: rgba(34, 197, 94, 0.28);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(14, 165, 233, 0.14));
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.12);
+    }
+    .learn-more-btn:hover { transform: translateY(-2px) scale(1.01); border-color: rgba(74, 222, 128, 0.5); box-shadow: 0 14px 32px rgba(34, 197, 94, 0.18); }
+    .emoji-bounce { display: inline-block; animation: emojiBounce 2.2s ease-in-out infinite; }
+    @keyframes emojiBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+    .modal-shell { opacity: 0; transform: translateY(18px) scale(0.98); transition: opacity 0.26s ease, transform 0.26s ease; }
+    .modal-shell.open { opacity: 1; transform: translateY(0) scale(1); }
+    .prose-modal p { color: #cbd5e1; line-height: 1.8; margin-top: 0.8rem; }
+    .prose-modal strong { color: #ffffff; }
+  </style>
+</head>
+<body class="min-h-screen bg-base text-text bg-pattern flex overflow-x-hidden font-sans">
+  <div id="sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-slate-950/70 md:hidden" onclick="closeSidebar()"></div>
+  <aside id="sidebar-drawer" class="bg-card border-r border-border flex flex-col h-screen shadow-xl">
+    <div class="p-6 border-b border-border bg-base/60 backdrop-blur-sm">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <i data-lucide="shield-check" class="text-accent w-6 h-6"></i>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-300 to-sky-400">Next.js Google Auth</h1>
+          </div>
+          <p class="text-xs text-muted">Treinamento visual da base ao dashboard</p>
+        </div>
+        <button onclick="closeSidebar()" class="rounded-lg p-2 text-muted hover:text-white transition md:hidden"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto p-4 space-y-3">
+      <div class="nav-group open rounded-xl border border-white/5 bg-base/20" data-group="inicio">
+        <button type="button" onclick="toggleNavGroup('inicio')" class="nav-group-toggle flex w-full items-center justify-between px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted transition hover:text-white">
+          <span class="flex items-center gap-2"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Início</span>
+          <i data-lucide="chevron-down" class="chevron w-4 h-4"></i>
+        </button>
+        <div class="nav-group-content"><div class="nav-group-inner px-2 pb-2 space-y-1">
+          <button onclick="showStep('step-intro')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 active group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">0</span><span>Introdução</span></button>
+          <button onclick="showStep('step-requirements')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">1</span><span>Requisitos</span></button>
+          <button onclick="showStep('step-nextjs-core')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">2</span><span>Criar projeto</span></button>
+        </div></div>
+      </div>
+
+      <div class="nav-group open rounded-xl border border-white/5 bg-base/20" data-group="estrutura">
+        <button type="button" onclick="toggleNavGroup('estrutura')" class="nav-group-toggle flex w-full items-center justify-between px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted transition hover:text-white">
+          <span class="flex items-center gap-2"><i data-lucide="workflow" class="w-3.5 h-3.5"></i> Ambiente</span>
+          <i data-lucide="chevron-down" class="chevron w-4 h-4"></i>
+        </button>
+        <div class="nav-group-content"><div class="nav-group-inner px-2 pb-2 space-y-1">
+          <button onclick="showStep('step-env')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">3</span><span>Variáveis</span></button>
+          <button onclick="showStep('step-google-console')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">4</span><span>Google Console</span></button>
+          <button onclick="showStep('step-flow')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">5</span><span>Fluxo</span></button>
+          <button onclick="showStep('step-implementation')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">6</span><span>Setup auth</span></button>
+          <button onclick="showStep('step-screens')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">7</span><span>Telas</span></button>
+        </div></div>
+      </div>
+
+      <div class="nav-group open rounded-xl border border-white/5 bg-base/20" data-group="stack">
+        <button type="button" onclick="toggleNavGroup('stack')" class="nav-group-toggle flex w-full items-center justify-between px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted transition hover:text-white">
+          <span class="flex items-center gap-2"><i data-lucide="library" class="w-3.5 h-3.5"></i> Validação</span>
+          <i data-lucide="chevron-down" class="chevron w-4 h-4"></i>
+        </button>
+        <div class="nav-group-content"><div class="nav-group-inner px-2 pb-2 space-y-1">
+          <button onclick="showStep('step-tests')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">8</span><span>Testes</span></button>
+          <button onclick="showStep('step-errors')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">9</span><span>Erros comuns</span></button>
+          <button onclick="showStep('step-summary')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">10</span><span>Resumo final</span></button>
+        </div></div>
+      </div>
+
+      <div class="nav-group open rounded-xl border border-white/5 bg-base/20" data-group="fechamento">
+        <button type="button" onclick="toggleNavGroup('fechamento')" class="nav-group-toggle flex w-full items-center justify-between px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted transition hover:text-white">
+          <span class="flex items-center gap-2"><i data-lucide="target" class="w-3.5 h-3.5"></i> Fechamento</span>
+          <i data-lucide="chevron-down" class="chevron w-4 h-4"></i>
+        </button>
+        <div class="nav-group-content"><div class="nav-group-inner px-2 pb-2 space-y-1">
+          <button onclick="showStep('step-summary')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">10</span><span>Resumo</span></button>
+        </div></div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="flex-1 min-w-0 h-screen overflow-y-auto relative scroll-smooth">
+    <header class="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-base/80 px-4 py-3 backdrop-blur md:hidden">
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.18em] text-muted">Tutorial</p>
+        <p class="text-sm font-semibold text-white">Next.js com Google Auth</p>
+      </div>
+      <button onclick="openSidebar()" class="rounded-lg border border-border bg-card px-3 py-2 text-white transition hover:border-accent hover:text-accent">
+        <span class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide"><i data-lucide="menu" class="w-4 h-4"></i> Menu</span>
+      </button>
+    </header>
+
+    <div class="px-4 py-6 md:px-8 md:py-10 xl:px-8">
+      <div class="w-full max-w-[104rem] mx-auto">
+        <section class="min-w-0 w-full">
+          <div id="step-intro" class="step-content active space-y-8">
+            <div class="border-b border-border pb-6">
+              <span class="text-accent text-sm font-bold tracking-wider uppercase flex items-center gap-2 mb-2"><span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span> Módulo Inicial</span>
+              <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-4">Introdução ao Next.js com Google Auth</h2>
+              <p class="text-lg text-muted leading-8 max-w-4xl">Este treinamento organiza a trilha completa para criar uma aplicação base com login Google, sessão autenticada e dashboard protegido usando Next.js.</p>
+            </div>
+            <div class="grid lg:grid-cols-3 gap-6">
+              <div class="p-6 rounded-2xl soft-card bg-card border border-border"><div class="w-11 h-11 rounded-xl bg-green-500/20 flex items-center justify-center mb-4"><i data-lucide="shield-check" class="text-green-300"></i></div><h3 class="text-lg font-semibold mb-2 text-white">Objetivo da base</h3><p class="text-sm text-muted leading-7">Construir home, tela de login e dashboard autenticado com ações de sair e atualizar perfil.</p></div>
+              <div class="p-6 rounded-2xl soft-card bg-card border border-border"><div class="w-11 h-11 rounded-xl bg-sky-500/20 flex items-center justify-center mb-4"><i data-lucide="folder-kanban" class="text-sky-300"></i></div><h3 class="text-lg font-semibold mb-2 text-white">Estado atual</h3><p class="text-sm text-muted leading-7">O projeto ja existe em Next.js, usa App Router, possui credenciais principais no `.env.local` e agora tambem ja tem home, login, dashboard, rota real de auth e protecao via `proxy.ts`.</p></div>
+              <div class="p-6 rounded-2xl soft-card bg-card border border-border"><div class="w-11 h-11 rounded-xl bg-violet-500/20 flex items-center justify-center mb-4"><i data-lucide="rocket" class="text-violet-300"></i></div><h3 class="text-lg font-semibold mb-2 text-white">Entrega esperada</h3><p class="text-sm text-muted leading-7">Uma base pronta para autenticação real, com fluxo validado do requisito inicial ao dashboard privado.</p></div>
+            </div>
+            <div><button type="button" class="learn-more-btn" data-info-title="O que vamos construir?" data-info-content="<p><strong>A jornada deste treinamento cobre:</strong> requisitos com Node.js, criação do projeto Next.js, validação do `.env.local`, configuração do Google Console e organização do fluxo de autenticação.</p><p>No final, teremos uma base clara para implementar o auth real no projeto.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>✨</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-end"><button onclick="showStep('step-requirements')" class="bg-accent hover:bg-green-600 text-white px-8 py-4 rounded-xl font-bold transition flex items-center gap-2">Ver requisitos <i data-lucide="arrow-right" class="w-5 h-5"></i></button></div>
+          </div>
+
+          <div id="step-requirements" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-mono font-bold border border-accent/20">PASSO 1</span></div>
+              <h2 class="text-3xl font-bold text-white">Requisitos para começar</h2>
+              <p class="text-muted mt-2 leading-7">Antes de configurar o Google Auth, a base local precisa estar saudável. Isso evita travas logo no início da trilha.</p>
+            </div>
+            <div class="grid lg:grid-cols-3 gap-6">
+              <div class="rounded-2xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 to-green-500/5 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <span class="inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300">Base</span>
+                  <span class="text-xl">🟢</span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">Essencial</h3>
+                <div class="space-y-3 text-sm text-muted leading-7">
+                  <p><strong class="text-white">Node.js instalado</strong> para rodar o projeto Next.js.</p>
+                  <p><strong class="text-white">NPM funcionando</strong> para instalar dependências.</p>
+                  <p><strong class="text-white">Editor preparado</strong> como VS Code.</p>
+                  <p><strong class="text-white">Acesso ao Google Cloud Console</strong> para configurar OAuth.</p>
+                </div>
+              </div>
+              <div class="rounded-2xl border border-sky-400/20 bg-gradient-to-br from-sky-500/10 to-cyan-500/5 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <span class="inline-flex items-center rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-sky-300">Terminal</span>
+                  <span class="text-xl">💻</span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">Validação rápida</h3>
+                <div class="space-y-3 text-sm text-muted leading-7">
+                  <p>Confirme se o terminal responde aos comandos de versão.</p>
+                </div>
+                <div class="mt-4 rounded-2xl border border-border bg-base/40 p-4"><pre><code>node -v
+npm -v</code></pre></div>
+              </div>
+              <div class="rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/5 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <span class="inline-flex items-center rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-violet-300">Checklist</span>
+                  <span class="text-xl">🧠</span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">O que confirmar</h3>
+                <div class="space-y-3 text-sm text-muted leading-7">
+                  <p>Node.js responde no terminal.</p>
+                  <p>NPM responde no terminal.</p>
+                  <p>Projeto local abre normalmente.</p>
+                  <p>Conta Google Cloud acessível.</p>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-border bg-card p-6 md:p-8">
+              <div class="flex flex-wrap items-center gap-3 mb-4">
+                <span class="inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">✅ Node.js</span>
+                <span class="inline-flex items-center rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-300">✅ Editor</span>
+                <span class="inline-flex items-center rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">✅ Terminal</span>
+                <span class="inline-flex items-center rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-300">✅ Google Cloud</span>
+                <span class="inline-flex items-center rounded-full border border-pink-400/20 bg-pink-500/10 px-3 py-1 text-xs font-semibold text-pink-300">✅ Projeto local</span>
+              </div>
+              <p class="text-sm text-muted leading-8">Quando o ambiente local está alinhado, a parte de autenticação fica muito mais previsível e o treinamento flui sem ruído desnecessário.</p>
+            </div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Por que validar isso primeiro?" data-info-content="<p><strong>Problemas simples de ambiente podem parecer falhas graves de autenticação.</strong></p><p>Validar Node.js, NPM e acesso ao Google Console antes de tudo economiza bastante tempo.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🧠</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-intro')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-nextjs-core')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: criar projeto <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-nextjs-core" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-sky-500/10 text-sky-300 text-xs font-mono font-bold border border-sky-500/20">PASSO 2</span></div>
+              <h2 class="text-3xl font-bold text-white">Criando o projeto Next.js</h2>
+              <p class="text-muted mt-2 leading-7">Mesmo com o projeto atual já criado, o treinamento precisa registrar como seria a criação do zero para deixar a trilha reutilizável.</p>
+            </div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Criando projeto Next.js">
+              <div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4">
+                <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Setup</p><h3 class="mt-1 text-lg font-semibold text-white">Projeto inicial</h3></div>
+                <div class="flex items-center gap-2"><button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button><button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button></div>
+              </div>
+              <div class="p-5"><pre><code>npx create-next-app@latest next-auth
+cd next-auth
+npm run dev</code></pre></div>
+            </div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Por que manter este passo se o projeto já existe?" data-info-content="<p><strong>Porque o treinamento precisa ser reaproveitável.</strong></p><p>Assim, qualquer pessoa que pegar o material consegue repetir a base desde o início.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🏗️</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-requirements')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-env')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: variáveis <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-env" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 text-xs font-mono font-bold border border-emerald-500/20">PASSO 3</span></div><h2 class="text-3xl font-bold text-white">Lendo e validando o `.env.local`</h2><p class="text-muted mt-2 leading-7">O projeto já possui credenciais principais. Agora precisamos entender o que já existe e o que será padronizado para a autenticação.</p></div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="rounded-2xl border border-border bg-card p-6"><h3 class="text-xl font-bold text-white mb-4">Variáveis já encontradas</h3><p class="text-sm text-muted leading-7"><code>AUTH_SECRET</code>, <code>AUTH_GOOGLE_ID</code>, <code>AUTH_GOOGLE_SECRET</code>, <code>NEXTAUTH_LOCAL_URL</code>, <code>NEXTAUTH_EXTERNO_URL</code> e <code>NEXT_PORT_LOCAL</code>.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-6"><h3 class="text-xl font-bold text-white mb-4">Ajuste esperado</h3><p class="text-sm text-muted leading-7">Padronizar a variável principal de URL para a biblioteca de autenticação, normalmente com <code>AUTH_URL</code>.</p></div>
+            </div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Formato recomendado do .env.local"><div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4"><div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Env</p><h3 class="mt-1 text-lg font-semibold text-white">Padrão sugerido</h3></div><div class="flex items-center gap-2"><button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button><button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button></div></div><div class="p-5"><pre><code>AUTH_SECRET="..."
+AUTH_GOOGLE_ID="..."
+AUTH_GOOGLE_SECRET="..."
+AUTH_URL="http://localhost:3050"
+AUTH_TRUST_HOST=true</code></pre></div></div>
+            <div class="rounded-2xl border border-amber-400/20 bg-gradient-to-br from-amber-500/10 to-orange-500/5 p-6">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="inline-flex items-center rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-300">Porta local</span>
+                <span class="text-xl">⚠️</span>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-4">Aviso importante</h3>
+              <div class="space-y-3 text-sm text-muted leading-7">
+                <p>Nesta base, a porta local esta em <strong class="text-white">3050</strong>.</p>
+                <p>Se voce mudar a porta, precisa alinhar `.env.local`, script de execucao, origem local e callback local no Google Console.</p>
+                <p>Se uma parte ficar em `3000` e outra em `3050`, o login pode falhar com <strong class="text-white">redirect_uri_mismatch</strong>.</p>
+              </div>
+            </div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Por que padronizar a URL?" data-info-content="<p><strong>A biblioteca de autenticação normalmente espera uma variável padrão para saber qual é a URL principal da aplicação.</strong></p><p>Mesmo que as URLs local e externa estejam anotadas, usar a chave esperada pela biblioteca reduz falhas de callback e sessão.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🧩</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-nextjs-core')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-google-console')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: Google Console <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-google-console" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-sky-500/10 text-sky-300 text-xs font-mono font-bold border border-sky-500/20">PASSO 4</span></div><h2 class="text-3xl font-bold text-white">Configurando o Google Console</h2><p class="text-muted mt-2 leading-7">Aqui cadastramos a aplicação, geramos as credenciais OAuth e definimos origens e callbacks válidos.</p></div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="rounded-2xl border border-border bg-card p-6"><h3 class="text-xl font-bold text-white mb-4">Passo a passo</h3><div class="space-y-3 text-sm text-muted leading-7"><p>Criar ou escolher um projeto.</p><p>Configurar a tela de consentimento OAuth.</p><p>Criar o cliente OAuth para aplicação web.</p><p>Salvar `client id` e `client secret`.</p><p>Configurar origens autorizadas.</p><p>Configurar callbacks autorizados.</p></div></div>
+              <div class="rounded-2xl border border-border bg-card p-6"><h3 class="text-xl font-bold text-white mb-4">O que cada parte faz</h3><div class="space-y-3 text-sm text-muted leading-7"><p><strong class="text-white">Tela de consentimento</strong> é a tela que o usuário vê antes de autorizar.</p><p><strong class="text-white">Cliente OAuth</strong> é o cadastro técnico da aplicação.</p><p><strong class="text-white">Origem autorizada</strong> define de onde o login pode começar.</p><p><strong class="text-white">URI de redirecionamento</strong> define para onde o usuário volta após autenticar.</p></div></div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="rounded-2xl border border-border bg-card p-6"><h3 class="text-lg font-bold text-white mb-4">Imagem: cliente OAuth criado</h3><p class="text-sm text-muted leading-7">Esta imagem ajuda a reconhecer a tela em que o Google mostra o `client id` e o `client secret` logo após a criação.</p><div class="mt-5 rounded-2xl overflow-hidden border border-border bg-base/40"><img src="./auth-exemplo-gerado.png" alt="Cliente OAuth criado no Google Console" class="w-full h-auto" /></div></div>
+              <div class="rounded-2xl border border-border bg-card p-6"><h3 class="text-lg font-bold text-white mb-4">Imagem: origens e callbacks</h3><p class="text-sm text-muted leading-7">Aqui vemos exatamente onde cadastrar as origens JavaScript autorizadas e as URIs de redirecionamento autorizadas.</p><div class="mt-5 rounded-2xl overflow-hidden border border-border bg-base/40"><img src="./google-console.png" alt="Configuração das origens e callbacks no Google Console" class="w-full h-auto" /></div></div>
+            </div>
+            <div class="rounded-2xl border border-red-400/20 bg-gradient-to-br from-red-500/10 to-orange-500/5 p-6">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="inline-flex items-center rounded-full border border-red-400/20 bg-red-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-red-300">Erro comum</span>
+                <span class="text-xl">🚨</span>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-4">Atenção total com a porta local</h3>
+              <div class="space-y-3 text-sm text-muted leading-7">
+                <p>Se a aplicacao estiver em <strong class="text-white">http://localhost:3050</strong>, o Google Console tambem precisa usar <strong class="text-white">3050</strong>.</p>
+                <p>Se o Google Console continuar em `3000`, o login falha com <strong class="text-white">redirect_uri_mismatch</strong>.</p>
+                <p>Revise sempre a origem local e o callback local quando mudar a porta do projeto.</p>
+              </div>
+            </div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Regra de ouro do Google Console" data-info-content="<p><strong>Se a URL cadastrada no Google não bater exatamente com a URL usada pela aplicação, o login falha.</strong></p><p>Os erros mais comuns aqui são: domínio diferente, callback incompleto e esquecer a URL de produção.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🗺️</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-env')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-flow')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: fluxo <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-flow" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-violet-500/10 text-violet-300 text-xs font-mono font-bold border border-violet-500/20">PASSO 5</span></div><h2 class="text-3xl font-bold text-white">Fluxo da aplicação</h2><p class="text-muted mt-2 leading-7">Depois do ambiente e do console, o usuário vai percorrer um fluxo simples e previsível.</p></div>
+            <div class="grid md:grid-cols-3 gap-5">
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Home</h3><p class="text-sm text-muted leading-7">Tela inicial com CTA para entrar na conta.</p></div>
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Login</h3><p class="text-sm text-muted leading-7">Botão `Entrar com Google` para iniciar o OAuth.</p></div>
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Dashboard</h3><p class="text-sm text-muted leading-7">Área autenticada com nome, email, foto, sair e atualizar perfil.</p></div>
+            </div>
+            <div class="rounded-2xl border border-border bg-card p-6 md:p-8"><div class="space-y-5 text-sm text-muted leading-8">
+              <p><strong class="text-white">1.</strong> O usuário abre a home.</p>
+              <p><strong class="text-white">2.</strong> Clica em entrar na conta.</p>
+              <p><strong class="text-white">3.</strong> Vai para a tela de login.</p>
+              <p><strong class="text-white">4.</strong> Clica em entrar com Google.</p>
+              <p><strong class="text-white">5.</strong> Autoriza o acesso no Google.</p>
+              <p><strong class="text-white">6.</strong> Volta autenticado para o sistema.</p>
+              <p><strong class="text-white">7.</strong> É redirecionado para o dashboard.</p>
+              <p><strong class="text-white">8.</strong> Pode atualizar perfil ou sair.</p>
+            </div></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-google-console')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-implementation')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: setup auth <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-implementation" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 text-xs font-mono font-bold border border-amber-500/20">PASSO 6</span></div><h2 class="text-3xl font-bold text-white">Implementação técnica do auth</h2><p class="text-muted mt-2 leading-7">Aqui organizamos a sequência de trabalho para sair do planejamento e montar a autenticação no projeto.</p></div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Instalando next-auth"><div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4"><div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Dependência</p><h3 class="mt-1 text-lg font-semibold text-white">Instalação</h3></div><div class="flex items-center gap-2"><button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button><button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button></div></div><div class="p-5"><pre><code>npm install next-auth</code></pre></div></div>
+              <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Estrutura esperada do auth"><div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4"><div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Estrutura</p><h3 class="mt-1 text-lg font-semibold text-white">Arquivos esperados</h3></div><div class="flex items-center gap-2"><button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button><button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button></div></div><div class="p-5"><pre><code>src/
+  app/
+    api/
+      auth/
+        [...nextauth]/
+          route.ts
+    dashboard/
+      page.tsx
+    login/
+      page.tsx
+    page.tsx
+  auth.ts
+  proxy.ts</code></pre></div></div>
+            </div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Atualizar perfil nesta base" data-info-content="<p><strong>Nesta primeira versão, atualizar perfil significa revalidar a sessão e atualizar nome, email e foto que vêm do Google.</strong></p><p>Mais adiante isso pode virar uma tela de edição com dados próprios do sistema.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🗃️</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-flow')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-screens')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: telas <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-screens" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-pink-500/10 text-pink-300 text-xs font-mono font-bold border border-pink-500/20">PASSO 7</span></div><h2 class="text-3xl font-bold text-white">Telas da aplicação</h2><p class="text-muted mt-2 leading-7">Estas são as três telas centrais que compõem a experiência do usuário nesta base.</p></div>
+            <div class="grid md:grid-cols-3 gap-5">
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Home</h3><p class="text-sm text-muted leading-7">Título, descrição curta e botão `Entrar na conta`.</p></div>
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Login</h3><p class="text-sm text-muted leading-7">Botão `Entrar com Google` e orientação curta do fluxo.</p></div>
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Dashboard</h3><p class="text-sm text-muted leading-7">Nome, email, foto, botão `Atualizar perfil` e botão `Sair`.</p></div>
+            </div>
+            <div><button type="button" class="learn-more-btn" data-info-title="O que significa atualizar perfil?" data-info-content="<p><strong>Nesta base inicial, atualizar perfil significa revalidar a sessão e atualizar os dados vindos do Google.</strong></p><p>Isso inclui nome, email e foto do usuário autenticado.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🛠️</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-implementation')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-tests')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: testes <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-tests" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-violet-500/10 text-violet-300 text-xs font-mono font-bold border border-violet-500/20">PASSO 8</span></div><h2 class="text-3xl font-bold text-white">Checklist de testes</h2><p class="text-muted mt-2 leading-7">Antes de considerar a base pronta, o ideal é validar interface, sessão e configuração do Google Console.</p></div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Interface</h3><div class="space-y-3 text-sm text-muted leading-7"><p>Home abre corretamente.</p><p>Login abre corretamente.</p><p>Dashboard exige autenticação.</p><p>Sair funciona.</p><p>Atualizar perfil funciona.</p></div></div>
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Google Console</h3><div class="space-y-3 text-sm text-muted leading-7"><p>Origem local cadastrada.</p><p>Origem publicada cadastrada.</p><p>Callback local cadastrado.</p><p>Callback de produção cadastrado.</p></div></div>
+            </div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-screens')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-errors')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: erros comuns <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-errors" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 text-xs font-mono font-bold border border-amber-500/20">PASSO 9</span></div><h2 class="text-3xl font-bold text-white">Erros comuns</h2><p class="text-muted mt-2 leading-7">Alguns problemas aparecem com frequência nesse tipo de integração. Ter isso documentado acelera muito o diagnóstico.</p></div>
+            <div class="grid md:grid-cols-2 gap-5">
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">`redirect_uri_mismatch`</h3><p class="text-sm text-muted leading-7">A URI cadastrada no Google está diferente da URI usada pela aplicação. Nesta base, isso acontece com frequencia quando o projeto roda em `3050` e o Google Console continua em `3000`.</p></div>
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">`invalid_client`</h3><p class="text-sm text-muted leading-7">Client id ou client secret incorretos.</p></div>
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Funciona local e quebra em produção</h3><p class="text-sm text-muted leading-7">Normalmente a URL publicada não foi cadastrada ou as variáveis da hospedagem não foram configuradas.</p></div>
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Dashboard sem sessão</h3><p class="text-sm text-muted leading-7">Geralmente faltou `AUTH_SECRET`, a configuração está incompleta ou a sessão está sendo lida de forma incorreta.</p></div>
+            </div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-tests')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-summary')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: resumo <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-summary" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-green-500/10 text-green-300 text-xs font-mono font-bold border border-green-500/20">PASSO 10</span></div><h2 class="text-3xl font-bold text-white">Resumo final</h2><p class="text-muted mt-2 leading-7">Fechamento da trilha validada, do requisito inicial até a base pronta para autenticação real.</p></div>
+            <div class="rounded-2xl border border-border bg-card p-6 md:p-8"><div class="space-y-5 text-sm text-muted leading-8">
+              <p><strong class="text-white">Node.js e NPM</strong> precisam estar validados logo no começo.</p>
+              <p><strong class="text-white">Projeto Next.js</strong> pode ser criado do zero ou aproveitado se já existir.</p>
+              <p><strong class="text-white">`.env.local`</strong> precisa ser alinhado com o padrão esperado pela biblioteca.</p>
+              <p><strong class="text-white">Google Console</strong> exige atenção total nas origens e callbacks.</p>
+              <p><strong class="text-white">Home, login e dashboard</strong> compõem o fluxo mínimo da aplicação.</p>
+              <p><strong class="text-white">Proximo passo ideal</strong> e validar o login real no navegador e preparar a mesma configuracao para producao.</p>
+            </div></div>
+            <div><button type="button" class="learn-more-btn" data-info-title="O que vem depois desta etapa?" data-info-content="<p><strong>Depois do treinamento validado, a próxima fase é a implementação real no projeto.</strong></p><p>Ela começa com instalação da biblioteca, padronização do `.env.local`, criação da configuração do auth e construção das três telas principais.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>⚖️</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4 pb-20"><button onclick="showStep('step-errors')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-intro')" class="bg-accent hover:bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Voltar ao início <i data-lucide="rotate-ccw" class="w-4 h-4"></i></button></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <div id="code-expand-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="code-expand-title">
+    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeCodeModal()"></div>
+    <div class="relative z-10 flex min-h-screen items-center justify-center p-4 md:p-8">
+      <div class="w-full max-w-5xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+        <div class="flex items-center justify-between gap-4 border-b border-border bg-base/70 px-5 py-4">
+          <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Visualizacao ampliada</p><h3 id="code-expand-title" class="mt-1 text-lg font-semibold text-white">Codigo</h3></div>
+          <button type="button" onclick="closeCodeModal()" class="code-action-btn"><i data-lucide="x" class="w-3.5 h-3.5"></i><span>Fechar</span></button>
+        </div>
+        <div class="max-h-[75vh] overflow-auto p-5"><pre class="!m-0"><code id="code-expand-content"></code></pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="info-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="info-modal-title">
+    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeInfoModal()"></div>
+    <div class="relative z-10 flex min-h-screen items-center justify-center p-4 md:p-8">
+      <div id="info-modal-shell" class="modal-shell w-full max-w-3xl overflow-hidden rounded-3xl border border-green-400/20 bg-card shadow-2xl">
+        <div class="flex items-center justify-between gap-4 border-b border-border bg-gradient-to-r from-green-500/10 to-sky-500/10 px-6 py-5">
+          <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-green-300">Saiba Mais</p><h3 id="info-modal-title" class="mt-1 text-xl font-semibold text-white">Detalhes</h3></div>
+          <button type="button" onclick="closeInfoModal()" class="code-action-btn"><i data-lucide="x" class="w-3.5 h-3.5"></i><span>Fechar</span></button>
+        </div>
+        <div class="p-6 md:p-8"><div id="info-modal-content" class="prose-modal text-sm md:text-base"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const drawer = document.getElementById('sidebar-drawer');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    const codeExpandModal = document.getElementById('code-expand-modal');
+    const codeExpandTitle = document.getElementById('code-expand-title');
+    const codeExpandContent = document.getElementById('code-expand-content');
+    const infoModal = document.getElementById('info-modal');
+    const infoModalShell = document.getElementById('info-modal-shell');
+    const infoModalTitle = document.getElementById('info-modal-title');
+    const infoModalContent = document.getElementById('info-modal-content');
+    function openSidebar() { drawer.classList.add('open'); backdrop.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+    function closeSidebar() { drawer.classList.remove('open'); backdrop.classList.add('hidden'); document.body.style.overflow = ''; }
+    function toggleNavGroup(groupName) { const group = document.querySelector(`[data-group="${groupName}"]`); if (!group) return; group.classList.toggle('open'); }
+    function syncActiveButtons(stepId) { document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active')); const leftBtn = document.querySelector(`button[onclick="showStep('${stepId}')"].nav-item`); if (leftBtn) leftBtn.classList.add('active'); }
+    function showStep(stepId) { document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active')); const content = document.getElementById(stepId); if (!content) return; content.classList.remove('active'); void content.offsetWidth; content.classList.add('active'); syncActiveButtons(stepId); document.querySelector('main').scrollTop = 0; if (window.innerWidth < 768) closeSidebar(); }
+    async function writeClipboardText(text) {
+      if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; }
+      const helper = document.createElement('textarea');
+      helper.value = text;
+      helper.setAttribute('readonly', '');
+      helper.style.position = 'fixed';
+      helper.style.opacity = '0';
+      document.body.appendChild(helper);
+      helper.select();
+      let copied = false;
+      try { copied = document.execCommand('copy'); } finally { document.body.removeChild(helper); }
+      return copied;
+    }
+    async function copyCode(button) {
+      const card = button.closest('[data-code-card]');
+      const code = card?.querySelector('code');
+      const label = button.querySelector('span');
+      if (!code || !label) return;
+      const originalLabel = label.textContent;
+      const source = code.textContent.replace(/\u00a0/g, ' ').trim();
+      try {
+        const copied = await writeClipboardText(source);
+        label.textContent = copied ? 'Copiado' : 'Falhou';
+      } catch (error) {
+        label.textContent = 'Falhou';
+      }
+      window.setTimeout(() => { label.textContent = originalLabel; }, 1600);
+    }
+    function expandCode(button) {
+      const card = button.closest('[data-code-card]');
+      const code = card?.querySelector('code');
+      if (!card || !code || !codeExpandModal || !codeExpandTitle || !codeExpandContent) return;
+      codeExpandTitle.textContent = card.dataset.codeTitle || 'Codigo';
+      codeExpandContent.innerHTML = code.innerHTML;
+      codeExpandModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeCodeModal() {
+      if (!codeExpandModal || codeExpandModal.classList.contains('hidden')) return;
+      codeExpandModal.classList.add('hidden');
+      codeExpandContent.innerHTML = '';
+      if (!drawer.classList.contains('open')) document.body.style.overflow = '';
+    }
+    function openInfoModal(button) {
+      if (!button || !infoModal || !infoModalShell || !infoModalTitle || !infoModalContent) return;
+      infoModalTitle.textContent = button.dataset.infoTitle || 'Saiba mais';
+      infoModalContent.innerHTML = button.dataset.infoContent || '<p>Sem conteúdo adicional.</p>';
+      infoModal.classList.remove('hidden');
+      requestAnimationFrame(() => infoModalShell.classList.add('open'));
+      document.body.style.overflow = 'hidden';
+    }
+    function closeInfoModal() {
+      if (!infoModal || infoModal.classList.contains('hidden')) return;
+      infoModalShell.classList.remove('open');
+      window.setTimeout(() => {
+        infoModal.classList.add('hidden');
+        infoModalContent.innerHTML = '';
+        if (!drawer.classList.contains('open') && (codeExpandModal?.classList.contains('hidden') ?? true)) {
+          document.body.style.overflow = '';
+        }
+      }, 220);
+    }
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        if (infoModal && !infoModal.classList.contains('hidden')) { closeInfoModal(); return; }
+        if (codeExpandModal && !codeExpandModal.classList.contains('hidden')) { closeCodeModal(); return; }
+        closeSidebar();
+      }
+    });
+    syncActiveButtons('step-intro');
+  </script>
+</body>
+</html>

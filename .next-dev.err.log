@@ -1,0 +1,9 @@
+⚠ Port 3000 is in use by process 21996, using available port 3002 instead.
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3001
+- PID:          8156
+- Dir:          C:\dev\test\next-auth
+- Log:          .next\dev\logs\next-development.log
+
+Run taskkill /PID 8156 /F to stop it.

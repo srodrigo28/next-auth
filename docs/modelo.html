@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Guia Python Django</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: "var(--color-base)",
+            accent: "var(--color-accent)",
+            text: "var(--color-text)",
+            muted: "var(--color-muted)",
+            card: "var(--color-card)",
+            border: "var(--color-border)",
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          }
+        },
+      },
+    };
+  </script>
+  <style>
+    :root {
+      --color-base: #07111f;
+      --color-accent: #22c55e;
+      --color-text: #f0fdf4;
+      --color-muted: #94a3b8;
+      --color-card: #0f1c2f;
+      --color-border: #1f3352;
+    }
+    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--color-accent) rgba(15, 23, 42, 0.55); }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+      background-image:
+        radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.12), transparent 24%),
+        linear-gradient(180deg, #07111f 0%, #081221 40%, #091524 100%);
+    }
+    .bg-pattern {
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(8, 18, 33, 0.9); }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.95), rgba(14, 165, 233, 0.9));
+      border-radius: 999px;
+      border: 2px solid rgba(8, 18, 33, 0.9);
+    }
+    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(74, 222, 128, 1), rgba(56, 189, 248, 1)); }
+    pre {
+      background-color: #020817;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      overflow-x: auto;
+      border: 1px solid var(--color-border);
+      margin: 0;
+    }
+    code { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; color: #dbeafe; }
+    .step-content { display: none; animation: fadeIn 0.35s ease-in-out; }
+    .step-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .nav-item.active { background-color: var(--color-accent); color: white; border-color: var(--color-accent); }
+    .nav-group-content { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.22s ease; }
+    .nav-group.open .nav-group-content { grid-template-rows: 1fr; }
+    .nav-group-inner { overflow: hidden; }
+    .nav-group-toggle .chevron { transition: transform 0.22s ease; }
+    .nav-group.open .nav-group-toggle .chevron { transform: rotate(180deg); }
+    #sidebar-drawer { position: fixed; inset: 0 auto 0 0; z-index: 40; width: min(20rem, 86vw); transform: translateX(-100%); transition: transform 0.25s cubic-bezier(.4, 0, .2, 1); }
+    #sidebar-drawer.open { transform: translateX(0); }
+    @media (min-width: 768px) { #sidebar-drawer { position: static; width: 18rem; height: 100vh; transform: translateX(0); } }
+    .soft-card { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)); backdrop-filter: blur(8px); }
+    .py-key { color: #4ade80; font-weight: 700; }
+    .py-fn { color: #60a5fa; }
+    .py-str { color: #fbbf24; }
+    .code-action-btn, .learn-more-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 0.95rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.2);
+      color: #f0fdf4;
+      font-size: 0.8rem;
+      font-weight: 700;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .code-action-btn { background: rgba(15,23,42,0.75); color: #cbd5e1; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 600; }
+    .learn-more-btn {
+      border-color: rgba(34, 197, 94, 0.28);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(14, 165, 233, 0.14));
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.12);
+    }
+    .learn-more-btn:hover { transform: translateY(-2px) scale(1.01); border-color: rgba(74, 222, 128, 0.5); box-shadow: 0 14px 32px rgba(34, 197, 94, 0.18); }
+    .emoji-bounce { display: inline-block; animation: emojiBounce 2.2s ease-in-out infinite; }
+    @keyframes emojiBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+    .modal-shell { opacity: 0; transform: translateY(18px) scale(0.98); transition: opacity 0.26s ease, transform 0.26s ease; }
+    .modal-shell.open { opacity: 1; transform: translateY(0) scale(1); }
+    .prose-modal p { color: #cbd5e1; line-height: 1.8; margin-top: 0.8rem; }
+    .prose-modal strong { color: #ffffff; }
+  </style>
+</head>
+<body class="min-h-screen bg-base text-text bg-pattern flex overflow-x-hidden font-sans">
+  <div id="sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-slate-950/70 md:hidden" onclick="closeSidebar()"></div>
+  <aside id="sidebar-drawer" class="bg-card border-r border-border flex flex-col h-screen shadow-xl">
+    <div class="p-6 border-b border-border bg-base/60 backdrop-blur-sm">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <i data-lucide="file-stack" class="text-accent w-6 h-6"></i>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-300 to-sky-400">Python Django</h1>
+          </div>
+          <p class="text-xs text-muted">Guia introdutório com estrutura profissional</p>
+        </div>
+        <button onclick="closeSidebar()" class="rounded-lg p-2 text-muted hover:text-white transition md:hidden"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto p-4 space-y-3">
+      <div class="nav-group open rounded-xl border border-white/5 bg-base/20" data-group="inicio">
+        <button type="button" onclick="toggleNavGroup('inicio')" class="nav-group-toggle flex w-full items-center justify-between px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted transition hover:text-white">
+          <span class="flex items-center gap-2"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Início</span>
+          <i data-lucide="chevron-down" class="chevron w-4 h-4"></i>
+        </button>
+        <div class="nav-group-content"><div class="nav-group-inner px-2 pb-2 space-y-1">
+          <button onclick="showStep('step-intro')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 active group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">0</span><span>Introdução</span></button>
+          <button onclick="showStep('step-requirements')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">1</span><span>Requisitos</span></button>
+          <button onclick="showStep('step-django-core')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">2</span><span>O que é Django</span></button>
+        </div></div>
+      </div>
+
+      <div class="nav-group open rounded-xl border border-white/5 bg-base/20" data-group="estrutura">
+        <button type="button" onclick="toggleNavGroup('estrutura')" class="nav-group-toggle flex w-full items-center justify-between px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted transition hover:text-white">
+          <span class="flex items-center gap-2"><i data-lucide="workflow" class="w-3.5 h-3.5"></i> Estrutura</span>
+          <i data-lucide="chevron-down" class="chevron w-4 h-4"></i>
+        </button>
+        <div class="nav-group-content"><div class="nav-group-inner px-2 pb-2 space-y-1">
+          <button onclick="showStep('step-project-apps')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">3</span><span>Projeto e apps</span></button>
+          <button onclick="showStep('step-urls-views')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">4</span><span>URLs e views</span></button>
+          <button onclick="showStep('step-templates')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">5</span><span>Templates</span></button>
+          <button onclick="showStep('step-models-orm')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">6</span><span>Models e ORM</span></button>
+          <button onclick="showStep('step-admin')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">7</span><span>Admin Django</span></button>
+        </div></div>
+      </div>
+
+      <div class="nav-group open rounded-xl border border-white/5 bg-base/20" data-group="stack">
+        <button type="button" onclick="toggleNavGroup('stack')" class="nav-group-toggle flex w-full items-center justify-between px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted transition hover:text-white">
+          <span class="flex items-center gap-2"><i data-lucide="library" class="w-3.5 h-3.5"></i> Stack</span>
+          <i data-lucide="chevron-down" class="chevron w-4 h-4"></i>
+        </button>
+        <div class="nav-group-content"><div class="nav-group-inner px-2 pb-2 space-y-1">
+          <button onclick="showStep('step-libraries')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">8</span><span>10 bibliotecas</span></button>
+          <button onclick="showStep('step-setup')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">9</span><span>Setup inicial</span></button>
+          <button onclick="showStep('step-examples')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">10</span><span>Exemplos</span></button>
+        </div></div>
+      </div>
+
+      <div class="nav-group open rounded-xl border border-white/5 bg-base/20" data-group="fechamento">
+        <button type="button" onclick="toggleNavGroup('fechamento')" class="nav-group-toggle flex w-full items-center justify-between px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted transition hover:text-white">
+          <span class="flex items-center gap-2"><i data-lucide="target" class="w-3.5 h-3.5"></i> Fechamento</span>
+          <i data-lucide="chevron-down" class="chevron w-4 h-4"></i>
+        </button>
+        <div class="nav-group-content"><div class="nav-group-inner px-2 pb-2 space-y-1">
+          <button onclick="showStep('step-summary')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">11</span><span>Resumo</span></button>
+        </div></div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="flex-1 min-w-0 h-screen overflow-y-auto relative scroll-smooth">
+    <header class="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-base/80 px-4 py-3 backdrop-blur md:hidden">
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.18em] text-muted">Tutorial</p>
+        <p class="text-sm font-semibold text-white">Python Django</p>
+      </div>
+      <button onclick="openSidebar()" class="rounded-lg border border-border bg-card px-3 py-2 text-white transition hover:border-accent hover:text-accent">
+        <span class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide"><i data-lucide="menu" class="w-4 h-4"></i> Menu</span>
+      </button>
+    </header>
+
+    <div class="px-4 py-6 md:px-8 md:py-10 xl:px-8">
+      <div class="w-full max-w-[104rem] mx-auto">
+        <section class="min-w-0 w-full">
+          <div id="step-intro" class="step-content active space-y-8">
+            <div class="border-b border-border pb-6">
+              <span class="text-accent text-sm font-bold tracking-wider uppercase flex items-center gap-2 mb-2"><span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span> Módulo Inicial</span>
+              <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-4">Introdução ao Python com Django</h2>
+              <p class="text-lg text-muted leading-8 max-w-4xl">Django é um framework web em Python conhecido por entregar uma estrutura mais completa e opinativa. Ele é muito usado para sistemas robustos, painéis administrativos, backends corporativos e aplicações com crescimento organizado.</p>
+            </div>
+            <div class="grid lg:grid-cols-3 gap-6">
+              <div class="p-6 rounded-2xl soft-card bg-card border border-border"><div class="w-11 h-11 rounded-xl bg-green-500/20 flex items-center justify-center mb-4"><i data-lucide="shield" class="text-green-300"></i></div><h3 class="text-lg font-semibold mb-2 text-white">Por que Django?</h3><p class="text-sm text-muted leading-7">Ele já traz muito do que um projeto real precisa: ORM, admin, autenticação e organização por apps.</p></div>
+              <div class="p-6 rounded-2xl soft-card bg-card border border-border"><div class="w-11 h-11 rounded-xl bg-sky-500/20 flex items-center justify-center mb-4"><i data-lucide="layout-panel-top" class="text-sky-300"></i></div><h3 class="text-lg font-semibold mb-2 text-white">Perfil do framework</h3><p class="text-sm text-muted leading-7">Django é menos minimalista que Flask e mais completo logo de saída, o que acelera times que querem padrão.</p></div>
+              <div class="p-6 rounded-2xl soft-card bg-card border border-border"><div class="w-11 h-11 rounded-xl bg-violet-500/20 flex items-center justify-center mb-4"><i data-lucide="building-2" class="text-violet-300"></i></div><h3 class="text-lg font-semibold mb-2 text-white">Onde ele aparece</h3><p class="text-sm text-muted leading-7">ERPs, intranets, sistemas internos, plataformas de conteúdo, autenticação e backends mais estruturados.</p></div>
+            </div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Quando escolher Django?" data-info-content="<p><strong>Django brilha quando o projeto precisa de estrutura, segurança e produtividade em conjunto.</strong> Ele é muito forte para sistemas com autenticação, CRUD, painel administrativo e banco relacional.</p><p>Se o time quer começar com convenções sólidas em vez de montar tudo manualmente, Django costuma ser uma excelente escolha.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>✨</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-end"><button onclick="showStep('step-requirements')" class="bg-accent hover:bg-green-600 text-white px-8 py-4 rounded-xl font-bold transition flex items-center gap-2">Ver requisitos <i data-lucide="arrow-right" class="w-5 h-5"></i></button></div>
+          </div>
+
+          <div id="step-requirements" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-mono font-bold border border-accent/20">PASSO 1</span></div>
+              <h2 class="text-3xl font-bold text-white">Requisitos para começar</h2>
+              <p class="text-muted mt-2 leading-7">Django pede uma base parecida com Flask, mas o ganho aparece quando você já entende o mínimo de estrutura web.</p>
+            </div>
+            <div class="grid lg:grid-cols-3 gap-6">
+              <div class="rounded-2xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 to-green-500/5 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <span class="inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300">Base</span>
+                  <span class="text-xl">🐍</span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">Essencial</h3>
+                <div class="space-y-3 text-sm text-muted leading-7">
+                  <p><strong class="text-white">Python 3 instalado</strong> para criar e executar o projeto.</p>
+                  <p><strong class="text-white">Editor preparado</strong> como VS Code ou PyCharm.</p>
+                  <p><strong class="text-white">Terminal + pip</strong> para dependências e comandos do framework.</p>
+                  <p><strong class="text-white">Fundamentos de Python</strong> como funções, módulos e arquivos.</p>
+                </div>
+              </div>
+              <div class="rounded-2xl border border-sky-400/20 bg-gradient-to-br from-sky-500/10 to-cyan-500/5 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <span class="inline-flex items-center rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-sky-300">Web</span>
+                  <span class="text-xl">🌐</span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">Ajuda muito</h3>
+                <div class="space-y-3 text-sm text-muted leading-7">
+                  <p><strong class="text-white">Noção de HTTP</strong> para entender request, response e rotas.</p>
+                  <p><strong class="text-white">HTML e templates</strong> para renderizar páginas com mais clareza.</p>
+                  <p><strong class="text-white">Banco de dados</strong> para aproveitar melhor models, ORM e admin.</p>
+                  <p><strong class="text-white">Git</strong> para versionar a evolução do sistema.</p>
+                </div>
+              </div>
+              <div class="rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/5 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <span class="inline-flex items-center rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-violet-300">Mentalidade</span>
+                  <span class="text-xl">🧠</span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">O segredo para ir bem</h3>
+                <div class="space-y-3 text-sm text-muted leading-7">
+                  <p>Django recompensa quem aceita aprender <strong class="text-white">estrutura</strong>, não só sintaxe.</p>
+                  <p>Quanto melhor você entender <strong class="text-white">organização por apps</strong>, mais valor o framework entrega.</p>
+                  <p>É um ótimo cenário para sair do “script solto” e pensar em <strong class="text-white">projeto profissional</strong>.</p>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-border bg-card p-6 md:p-8">
+              <div class="flex flex-wrap items-center gap-3 mb-4">
+                <span class="inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">✅ Python</span>
+                <span class="inline-flex items-center rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-300">✅ Editor</span>
+                <span class="inline-flex items-center rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">✅ Terminal</span>
+                <span class="inline-flex items-center rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-300">✅ Git</span>
+                <span class="inline-flex items-center rounded-full border border-pink-400/20 bg-pink-500/10 px-3 py-1 text-xs font-semibold text-pink-300">✅ HTTP</span>
+              </div>
+              <p class="text-sm text-muted leading-8">Se você já tem esse kit mínimo, Django deixa de parecer “grande demais” e começa a virar uma ferramenta muito confortável para construir sistemas mais sérios.</p>
+            </div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Django exige mais base?" data-info-content="<p><strong>Não necessariamente mais base, mas mais disposição para entender estrutura.</strong> Como Django já vem com várias peças prontas, aprender o papel de cada uma ajuda muito.</p><p>O esforço inicial costuma compensar quando o projeto cresce.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🧠</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-intro')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-django-core')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: Django <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-django-core" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-sky-500/10 text-sky-300 text-xs font-mono font-bold border border-sky-500/20">PASSO 2</span></div>
+              <h2 class="text-3xl font-bold text-white">O que é Django na prática</h2>
+              <p class="text-muted mt-2 leading-7">Django é um framework full-stack para back-end web. Ele organiza o projeto em componentes como URLs, views, templates, models e admin, tudo pensado para produtividade com padrão.</p>
+            </div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Primeiro projeto Django">
+              <div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4">
+                <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Exemplo mínimo</p><h3 class="mt-1 text-lg font-semibold text-white">Criando o projeto</h3></div>
+                <div class="flex items-center gap-2"><button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button><button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button></div>
+              </div>
+              <div class="p-5"><pre><code>pip install django
+django-admin startproject config .
+python manage.py runserver</code></pre></div>
+            </div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Django já entrega muita coisa pronta" data-info-content="<p><strong>Esse é um dos grandes diferenciais do Django.</strong> Em vez de montar várias peças manualmente, você já começa com uma fundação profissional.</p><p>Isso reduz decisões repetitivas e ajuda o time a manter consistência entre projetos.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🏗️</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-requirements')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-project-apps')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: estrutura <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-project-apps" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 text-xs font-mono font-bold border border-emerald-500/20">PASSO 3</span></div><h2 class="text-3xl font-bold text-white">Projeto e apps</h2><p class="text-muted mt-2 leading-7">Em Django, o projeto principal cuida da configuração geral, enquanto os apps dividem responsabilidades do sistema.</p></div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="rounded-2xl border border-border bg-card p-6"><h3 class="text-xl font-bold text-white mb-4">Projeto</h3><p class="text-sm text-muted leading-7">Contém configurações globais, URLs principais e integrações da aplicação inteira.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-6"><h3 class="text-xl font-bold text-white mb-4">Apps</h3><p class="text-sm text-muted leading-7">Cada app pode representar um domínio como usuários, produtos, pedidos ou financeiro.</p></div>
+            </div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Criando app Django"><div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4"><div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Estrutura</p><h3 class="mt-1 text-lg font-semibold text-white">startapp</h3></div><div class="flex items-center gap-2"><button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button><button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button></div></div><div class="p-5"><pre><code>python manage.py startapp usuarios</code></pre></div></div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Pensar em apps ajuda muito" data-info-content="<p><strong>Apps deixam o sistema mais modular.</strong> Em vez de concentrar tudo em um único lugar, você separa áreas de negócio e facilita manutenção, testes e crescimento.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🧩</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-django-core')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-urls-views')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: URLs e views <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-urls-views" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-sky-500/10 text-sky-300 text-xs font-mono font-bold border border-sky-500/20">PASSO 4</span></div><h2 class="text-3xl font-bold text-white">URLs e views</h2><p class="text-muted mt-2 leading-7">No Django, URLs direcionam a requisição para views, que processam a lógica e devolvem a resposta.</p></div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="URL e view Django"><div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4"><div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Roteamento</p><h3 class="mt-1 text-lg font-semibold text-white">path + view</h3></div><div class="flex items-center gap-2"><button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button><button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button></div></div><div class="p-5"><pre><code><span class="py-key">from</span> django.urls <span class="py-key">import</span> path
+<span class="py-key">from</span> . <span class="py-key">import</span> views
+
+urlpatterns = [
+    path(<span class="py-str">""</span>, views.home, name=<span class="py-str">"home"</span>),
+]</code></pre></div></div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Pensando no fluxo URL -> view" data-info-content="<p><strong>A URL identifica o endereço.</strong> A view decide o que fazer com a requisição.</p><p>Esse fluxo é central no Django e aparece em páginas, formulários, autenticação e APIs.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🗺️</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-project-apps')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-templates')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: templates <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-templates" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-violet-500/10 text-violet-300 text-xs font-mono font-bold border border-violet-500/20">PASSO 5</span></div><h2 class="text-3xl font-bold text-white">Templates e páginas web</h2><p class="text-muted mt-2 leading-7">Templates permitem renderizar HTML com dados vindos da view, usando a template language do Django.</p></div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Render template Django"><div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4"><div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Renderização</p><h3 class="mt-1 text-lg font-semibold text-white">render</h3></div><div class="flex items-center gap-2"><button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button><button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button></div></div><div class="p-5"><pre><code><span class="py-key">from</span> django.shortcuts <span class="py-key">import</span> render
+
+<span class="py-key">def</span> <span class="py-fn">home</span>(request):
+    <span class="py-key">return</span> <span class="py-fn">render</span>(request, <span class="py-str">"home.html"</span>, {<span class="py-str">"nome"</span>: <span class="py-str">"Ana"</span>})</code></pre></div></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-urls-views')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-models-orm')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: models e ORM <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-models-orm" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 text-xs font-mono font-bold border border-amber-500/20">PASSO 6</span></div><h2 class="text-3xl font-bold text-white">Models e ORM</h2><p class="text-muted mt-2 leading-7">O ORM do Django permite representar tabelas como classes Python e consultar dados sem escrever SQL o tempo todo.</p></div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Model Django"><div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4"><div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Banco de dados</p><h3 class="mt-1 text-lg font-semibold text-white">Model básico</h3></div><div class="flex items-center gap-2"><button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button><button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button></div></div><div class="p-5"><pre><code><span class="py-key">from</span> django.db <span class="py-key">import</span> models
+
+<span class="py-key">class</span> <span class="py-fn">Produto</span>(models.Model):
+    nome = models.CharField(max_length=120)
+    preco = models.DecimalField(max_digits=10, decimal_places=2)</code></pre></div></div>
+            <div><button type="button" class="learn-more-btn" data-info-title="ORM do Django simplifica muito" data-info-content="<p><strong>O ORM traduz classes e consultas Python para operações no banco.</strong> Isso acelera desenvolvimento e mantém o código mais próximo da lógica de negócio.</p><p>Mesmo assim, entender SQL continua sendo um diferencial enorme.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🗃️</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-templates')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-admin')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: admin <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-admin" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-pink-500/10 text-pink-300 text-xs font-mono font-bold border border-pink-500/20">PASSO 7</span></div><h2 class="text-3xl font-bold text-white">Admin Django</h2><p class="text-muted mt-2 leading-7">O painel administrativo é uma das funcionalidades mais marcantes do Django. Ele acelera muito CRUDs internos e operação de dados.</p></div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Admin Django"><div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4"><div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Admin</p><h3 class="mt-1 text-lg font-semibold text-white">Registrando model</h3></div><div class="flex items-center gap-2"><button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button><button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button></div></div><div class="p-5"><pre><code><span class="py-key">from</span> django.contrib <span class="py-key">import</span> admin
+<span class="py-key">from</span> .models <span class="py-key">import</span> Produto
+
+admin.site.register(Produto)</code></pre></div></div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Por que o admin do Django impressiona?" data-info-content="<p><strong>Porque ele entrega um painel funcional muito cedo no projeto.</strong> Isso reduz tempo de desenvolvimento para times internos e áreas operacionais.</p><p>Em muitos sistemas, só o admin já resolve grande parte do backoffice inicial.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🛠️</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-models-orm')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-libraries')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: bibliotecas <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-libraries" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-violet-500/10 text-violet-300 text-xs font-mono font-bold border border-violet-500/20">PASSO 8</span></div><h2 class="text-3xl font-bold text-white">10 bibliotecas muito usadas com Django</h2><p class="text-muted mt-2 leading-7">Além do núcleo do framework, algumas bibliotecas aparecem bastante em autenticação, APIs, ambientes e produção.</p></div>
+            <div class="grid md:grid-cols-2 xl:grid-cols-5 gap-4">
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">1. Django</p><p class="text-sm text-muted mt-2">Framework principal.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">2. djangorestframework</p><p class="text-sm text-muted mt-2">APIs REST.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">3. django-environ</p><p class="text-sm text-muted mt-2">Config por ambiente.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">4. Pillow</p><p class="text-sm text-muted mt-2">Uploads de imagem.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">5. psycopg</p><p class="text-sm text-muted mt-2">PostgreSQL.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">6. django-filter</p><p class="text-sm text-muted mt-2">Filtros em APIs.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">7. celery</p><p class="text-sm text-muted mt-2">Tarefas assíncronas.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">8. gunicorn</p><p class="text-sm text-muted mt-2">Servidor de produção.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">9. whitenoise</p><p class="text-sm text-muted mt-2">Arquivos estáticos.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">10. pytest-django</p><p class="text-sm text-muted mt-2">Testes.</p></div>
+            </div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Django e APIs modernas" data-info-content="<p><strong>Quando o projeto precisa servir app mobile, SPA ou integrações externas, o Django REST Framework costuma ser um dos primeiros complementos escolhidos.</strong></p><p>Ele transforma o Django em um back-end muito forte para produtos modernos.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>📚</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-admin')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-setup')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: setup <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-setup" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 text-xs font-mono font-bold border border-amber-500/20">PASSO 9</span></div><h2 class="text-3xl font-bold text-white">Setup inicial do projeto</h2><p class="text-muted mt-2 leading-7">Esses comandos montam uma base limpa para começar um projeto Django.</p></div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Setup Django"><div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4"><div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Terminal</p><h3 class="mt-1 text-lg font-semibold text-white">Ambiente inicial</h3></div><div class="flex items-center gap-2"><button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button><button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button></div></div><div class="p-5"><pre><code>python -m venv venv
+venv\Scripts\activate
+pip install django
+django-admin startproject config .
+python manage.py runserver</code></pre></div></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-libraries')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-examples')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: exemplos <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-examples" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-pink-500/10 text-pink-300 text-xs font-mono font-bold border border-pink-500/20">PASSO 10</span></div><h2 class="text-3xl font-bold text-white">Exemplos práticos</h2><p class="text-muted mt-2 leading-7">Depois da base inicial, esses são caminhos muito comuns de evolução em Django.</p></div>
+            <div class="grid md:grid-cols-3 gap-5">
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Exemplo 1</h3><p class="text-sm text-muted leading-7">Criar app de usuários ou produtos com models e admin.</p></div>
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Exemplo 2</h3><p class="text-sm text-muted leading-7">Construir páginas com templates e herança de layout.</p></div>
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Exemplo 3</h3><p class="text-sm text-muted leading-7">Transformar o projeto em API com Django REST Framework.</p></div>
+            </div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="View Django simples"><div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4"><div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">View</p><h3 class="mt-1 text-lg font-semibold text-white">HttpResponse</h3></div><div class="flex items-center gap-2"><button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button><button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button></div></div><div class="p-5"><pre><code><span class="py-key">from</span> django.http <span class="py-key">import</span> HttpResponse
+
+<span class="py-key">def</span> <span class="py-fn">home</span>(request):
+    <span class="py-key">return</span> <span class="py-fn">HttpResponse</span>(<span class="py-str">"Ola, Django!"</span>)</code></pre></div></div>
+            <div class="flex justify-between pt-4"><button onclick="showStep('step-setup')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-summary')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: resumo <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+          </div>
+
+          <div id="step-summary" class="step-content space-y-8">
+            <div class="border-b border-border pb-6"><div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-green-500/10 text-green-300 text-xs font-mono font-bold border border-green-500/20">PASSO 11</span></div><h2 class="text-3xl font-bold text-white">Resumo final</h2><p class="text-muted mt-2 leading-7">Fechamento rápido para revisão e comparação com outras stacks Python.</p></div>
+            <div class="rounded-2xl border border-border bg-card p-6 md:p-8"><div class="space-y-5 text-sm text-muted leading-8">
+              <p><strong class="text-white">Python</strong> segue sendo uma base excelente para web profissional.</p>
+              <p><strong class="text-white">Django</strong> é forte quando o projeto pede estrutura, padrão e velocidade com recursos prontos.</p>
+              <p><strong class="text-white">Projeto + apps</strong> ajudam a manter organização de domínio.</p>
+              <p><strong class="text-white">ORM e admin</strong> aceleram muito o desenvolvimento de sistemas internos e corporativos.</p>
+              <p><strong class="text-white">Próximo passo ideal</strong> é criar um app com model, admin e página renderizada.</p>
+            </div></div>
+            <div><button type="button" class="learn-more-btn" data-info-title="Django ou Flask?" data-info-content="<p><strong>Flask costuma vencer na leveza inicial.</strong> Django costuma vencer quando a estrutura pronta acelera mais do que a liberdade total.</p><p>Os dois são ótimos. A melhor escolha depende do tipo de produto e do estilo do time.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>⚖️</span><span>Saiba mais</span></button></div>
+            <div class="flex justify-between pt-4 pb-20"><button onclick="showStep('step-examples')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button><button onclick="showStep('step-intro')" class="bg-accent hover:bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Voltar ao início <i data-lucide="rotate-ccw" class="w-4 h-4"></i></button></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <div id="code-expand-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="code-expand-title">
+    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeCodeModal()"></div>
+    <div class="relative z-10 flex min-h-screen items-center justify-center p-4 md:p-8">
+      <div class="w-full max-w-5xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+        <div class="flex items-center justify-between gap-4 border-b border-border bg-base/70 px-5 py-4">
+          <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Visualizacao ampliada</p><h3 id="code-expand-title" class="mt-1 text-lg font-semibold text-white">Codigo</h3></div>
+          <button type="button" onclick="closeCodeModal()" class="code-action-btn"><i data-lucide="x" class="w-3.5 h-3.5"></i><span>Fechar</span></button>
+        </div>
+        <div class="max-h-[75vh] overflow-auto p-5"><pre class="!m-0"><code id="code-expand-content"></code></pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="info-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="info-modal-title">
+    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeInfoModal()"></div>
+    <div class="relative z-10 flex min-h-screen items-center justify-center p-4 md:p-8">
+      <div id="info-modal-shell" class="modal-shell w-full max-w-3xl overflow-hidden rounded-3xl border border-green-400/20 bg-card shadow-2xl">
+        <div class="flex items-center justify-between gap-4 border-b border-border bg-gradient-to-r from-green-500/10 to-sky-500/10 px-6 py-5">
+          <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-green-300">Saiba Mais</p><h3 id="info-modal-title" class="mt-1 text-xl font-semibold text-white">Detalhes</h3></div>
+          <button type="button" onclick="closeInfoModal()" class="code-action-btn"><i data-lucide="x" class="w-3.5 h-3.5"></i><span>Fechar</span></button>
+        </div>
+        <div class="p-6 md:p-8"><div id="info-modal-content" class="prose-modal text-sm md:text-base"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const drawer = document.getElementById('sidebar-drawer');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    const codeExpandModal = document.getElementById('code-expand-modal');
+    const codeExpandTitle = document.getElementById('code-expand-title');
+    const codeExpandContent = document.getElementById('code-expand-content');
+    const infoModal = document.getElementById('info-modal');
+    const infoModalShell = document.getElementById('info-modal-shell');
+    const infoModalTitle = document.getElementById('info-modal-title');
+    const infoModalContent = document.getElementById('info-modal-content');
+    function openSidebar() { drawer.classList.add('open'); backdrop.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+    function closeSidebar() { drawer.classList.remove('open'); backdrop.classList.add('hidden'); document.body.style.overflow = ''; }
+    function toggleNavGroup(groupName) { const group = document.querySelector(`[data-group="${groupName}"]`); if (!group) return; group.classList.toggle('open'); }
+    function syncActiveButtons(stepId) { document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active')); const leftBtn = document.querySelector(`button[onclick="showStep('${stepId}')"].nav-item`); if (leftBtn) leftBtn.classList.add('active'); }
+    function showStep(stepId) { document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active')); const content = document.getElementById(stepId); if (!content) return; content.classList.remove('active'); void content.offsetWidth; content.classList.add('active'); syncActiveButtons(stepId); document.querySelector('main').scrollTop = 0; if (window.innerWidth < 768) closeSidebar(); }
+    async function writeClipboardText(text) {
+      if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; }
+      const helper = document.createElement('textarea');
+      helper.value = text;
+      helper.setAttribute('readonly', '');
+      helper.style.position = 'fixed';
+      helper.style.opacity = '0';
+      document.body.appendChild(helper);
+      helper.select();
+      let copied = false;
+      try { copied = document.execCommand('copy'); } finally { document.body.removeChild(helper); }
+      return copied;
+    }
+    async function copyCode(button) {
+      const card = button.closest('[data-code-card]');
+      const code = card?.querySelector('code');
+      const label = button.querySelector('span');
+      if (!code || !label) return;
+      const originalLabel = label.textContent;
+      const source = code.textContent.replace(/\u00a0/g, ' ').trim();
+      try {
+        const copied = await writeClipboardText(source);
+        label.textContent = copied ? 'Copiado' : 'Falhou';
+      } catch (error) {
+        label.textContent = 'Falhou';
+      }
+      window.setTimeout(() => { label.textContent = originalLabel; }, 1600);
+    }
+    function expandCode(button) {
+      const card = button.closest('[data-code-card]');
+      const code = card?.querySelector('code');
+      if (!card || !code || !codeExpandModal || !codeExpandTitle || !codeExpandContent) return;
+      codeExpandTitle.textContent = card.dataset.codeTitle || 'Codigo';
+      codeExpandContent.innerHTML = code.innerHTML;
+      codeExpandModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeCodeModal() {
+      if (!codeExpandModal || codeExpandModal.classList.contains('hidden')) return;
+      codeExpandModal.classList.add('hidden');
+      codeExpandContent.innerHTML = '';
+      if (!drawer.classList.contains('open')) document.body.style.overflow = '';
+    }
+    function openInfoModal(button) {
+      if (!button || !infoModal || !infoModalShell || !infoModalTitle || !infoModalContent) return;
+      infoModalTitle.textContent = button.dataset.infoTitle || 'Saiba mais';
+      infoModalContent.innerHTML = button.dataset.infoContent || '<p>Sem conteúdo adicional.</p>';
+      infoModal.classList.remove('hidden');
+      requestAnimationFrame(() => infoModalShell.classList.add('open'));
+      document.body.style.overflow = 'hidden';
+    }
+    function closeInfoModal() {
+      if (!infoModal || infoModal.classList.contains('hidden')) return;
+      infoModalShell.classList.remove('open');
+      window.setTimeout(() => {
+        infoModal.classList.add('hidden');
+        infoModalContent.innerHTML = '';
+        if (!drawer.classList.contains('open') && (codeExpandModal?.classList.contains('hidden') ?? true)) {
+          document.body.style.overflow = '';
+        }
+      }, 220);
+    }
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        if (infoModal && !infoModal.classList.contains('hidden')) { closeInfoModal(); return; }
+        if (codeExpandModal && !codeExpandModal.classList.contains('hidden')) { closeCodeModal(); return; }
+        closeSidebar();
+      }
+    });
+    syncActiveButtons('step-intro');
+  </script>
+</body>
+</html>
