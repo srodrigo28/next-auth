@@ -29,8 +29,8 @@ export default async function TrackPage({ params }: TrackPageProps) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 sm:py-12">
-      <section className="grid w-full gap-8 rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur sm:p-8 xl:grid-cols-[minmax(0,1fr)_320px] xl:p-10">
+    <main className="mx-auto flex min-h-screen w-full max-w-[2200px] flex-1 px-4 py-6 sm:px-6 sm:py-8 2xl:px-10">
+      <section className="grid w-full gap-8 rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur sm:p-8 xl:grid-cols-[minmax(0,1.35fr)_360px] xl:p-10 2xl:gap-10 2xl:p-12">
         <div className="space-y-8">
           <div className="space-y-5">
             <div className="flex flex-wrap items-center gap-3">
@@ -58,14 +58,14 @@ export default async function TrackPage({ params }: TrackPageProps) {
             </div>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3 2xl:gap-6">
             {currentTrack.modules.map((module) => {
               const isAvailable = Boolean(module.href);
 
               const content = (
-                <div className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/45 p-6 shadow-xl transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30">
+                <div className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/45 p-6 shadow-xl transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30 2xl:min-h-[22rem] 2xl:p-8">
                   <div
-                    className={`absolute inset-x-0 top-0 h-32 bg-gradient-to-br ${module.accent} opacity-90 blur-2xl transition duration-300 group-hover:opacity-100`}
+                    className={`absolute inset-x-0 top-0 h-32 bg-gradient-to-br ${module.accent} opacity-90 blur-2xl transition duration-300 group-hover:opacity-100 2xl:h-40`}
                   />
                   <div className="relative">
                     <div className="flex items-center justify-between gap-3">
@@ -83,16 +83,16 @@ export default async function TrackPage({ params }: TrackPageProps) {
                       </span>
                     </div>
 
-                    <div className="mt-10">
-                      <h2 className="text-2xl font-black tracking-tight text-white">
+                    <div className="mt-10 2xl:mt-14">
+                      <h2 className="text-2xl font-black tracking-tight text-white 2xl:text-[1.85rem]">
                         {module.title}
                       </h2>
-                      <p className="mt-3 text-sm leading-7 text-slate-300">
+                      <p className="mt-3 text-sm leading-7 text-slate-300 2xl:text-[15px]">
                         {module.description}
                       </p>
                     </div>
 
-                    <div className="mt-8">
+                    <div className="mt-8 2xl:mt-10">
                       <span
                         className={`inline-flex rounded-full px-4 py-2 text-sm font-semibold ${
                           isAvailable

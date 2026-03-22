@@ -51,8 +51,9 @@ export const moduleCatalog: ModuleTrack[] = [
         title: "Django",
         description:
           "Estrutura de projeto, apps, ORM, autenticacao e deploy com organizacao profissional.",
-        badge: "Proximo modulo",
-        status: "Em breve",
+        href: "/treinamento/python-django?modulo=intro",
+        badge: "Modulo full stack",
+        status: "Disponivel",
         accent: "from-sky-400 via-blue-400 to-cyan-300",
       },
       {
@@ -60,8 +61,9 @@ export const moduleCatalog: ModuleTrack[] = [
         title: "Flask",
         description:
           "APIs leves, blueprints, configuracao por ambiente e extensoes para crescimento gradual.",
-        badge: "Planejado",
-        status: "Em breve",
+        href: "/treinamento/python-flask?modulo=intro",
+        badge: "Modulo full stack",
+        status: "Disponivel",
         accent: "from-cyan-400 via-sky-400 to-teal-300",
       },
     ],

@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Guia Python Flask</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: "var(--color-base)",
+            accent: "var(--color-accent)",
+            text: "var(--color-text)",
+            muted: "var(--color-muted)",
+            card: "var(--color-card)",
+            border: "var(--color-border)",
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          }
+        },
+      },
+    };
+  </script>
+  <style>
+    :root {
+      --color-base: #07111f;
+      --color-accent: #10b981;
+      --color-text: #ecfdf5;
+      --color-muted: #94a3b8;
+      --color-card: #0f1c2f;
+      --color-border: #1f3352;
+    }
+    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--color-accent) rgba(15, 23, 42, 0.55); }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+      background-image:
+        radial-gradient(circle at top left, rgba(16, 185, 129, 0.12), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.12), transparent 24%),
+        linear-gradient(180deg, #07111f 0%, #081221 40%, #091524 100%);
+    }
+    .bg-pattern {
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(8, 18, 33, 0.9); }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.95), rgba(59, 130, 246, 0.9));
+      border-radius: 999px;
+      border: 2px solid rgba(8, 18, 33, 0.9);
+    }
+    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(52, 211, 153, 1), rgba(96, 165, 250, 1)); }
+    pre {
+      background-color: #020817;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      overflow-x: auto;
+      border: 1px solid var(--color-border);
+      margin: 0;
+    }
+    code { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; color: #dbeafe; }
+    .step-content { display: none; animation: fadeIn 0.35s ease-in-out; }
+    .step-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .nav-item.active { background-color: var(--color-accent); color: white; border-color: var(--color-accent); }
+    .nav-group-content { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.22s ease; }
+    .nav-group.open .nav-group-content { grid-template-rows: 1fr; }
+    .nav-group-inner { overflow: hidden; }
+    .nav-group-toggle .chevron { transition: transform 0.22s ease; }
+    .nav-group.open .nav-group-toggle .chevron { transform: rotate(180deg); }
+    #sidebar-drawer { position: fixed; inset: 0 auto 0 0; z-index: 40; width: min(20rem, 86vw); transform: translateX(-100%); transition: transform 0.25s cubic-bezier(.4, 0, .2, 1); }
+    #sidebar-drawer.open { transform: translateX(0); }
+    @media (min-width: 768px) { #sidebar-drawer { position: static; width: 18rem; height: 100vh; transform: translateX(0); } }
+    .soft-card { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)); backdrop-filter: blur(8px); }
+    .py-key { color: #34d399; font-weight: 700; }
+    .py-fn { color: #60a5fa; }
+    .py-str { color: #fbbf24; }
+    .code-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148,163,184,0.2);
+      background: rgba(15,23,42,0.75);
+      color: #cbd5e1;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .learn-more-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(59, 130, 246, 0.14));
+      color: #f0fdf4;
+      font-size: 0.8rem;
+      font-weight: 700;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.12);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .learn-more-btn:hover {
+      transform: translateY(-2px) scale(1.01);
+      border-color: rgba(52, 211, 153, 0.5);
+      box-shadow: 0 14px 32px rgba(16, 185, 129, 0.18);
+    }
+    .emoji-bounce {
+      display: inline-block;
+      animation: emojiBounce 2.2s ease-in-out infinite;
+    }
+    @keyframes emojiBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
+    .modal-shell {
+      opacity: 0;
+      transform: translateY(18px) scale(0.98);
+      transition: opacity 0.26s ease, transform 0.26s ease;
+    }
+    .modal-shell.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .prose-modal p {
+      color: #cbd5e1;
+      line-height: 1.8;
+      margin-top: 0.8rem;
+    }
+    .prose-modal strong {
+      color: #ffffff;
+    }
+    .command-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.25rem;
+      border: 1px solid var(--color-border);
+      border-radius: 1.25rem;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.08));
+    }
+    .command-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+    .command-step {
+      border: 1px solid rgba(31, 51, 82, 0.95);
+      background: linear-gradient(180deg, rgba(15, 28, 47, 0.98), rgba(9, 21, 36, 0.96));
+      border-radius: 1rem;
+      padding: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      min-height: 100%;
+    }
+    .command-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.7rem;
+      width: fit-content;
+      border-radius: 999px;
+      border: 1px solid rgba(16, 185, 129, 0.22);
+      background: rgba(16, 185, 129, 0.08);
+      color: #a7f3d0;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    @media (max-width: 767px) {
+      .command-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .command-actions {
+        width: 100%;
+        justify-content: stretch;
+      }
+      .command-actions .code-action-btn,
+      .command-actions .learn-more-btn {
+        flex: 1 1 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-base text-text bg-pattern flex overflow-x-hidden font-sans">
+  <div id="sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-slate-950/70 md:hidden" onclick="closeSidebar()"></div>
+  <aside id="sidebar-drawer" class="bg-card border-r border-border flex flex-col h-screen shadow-xl">
+    <div class="p-6 border-b border-border bg-base/60 backdrop-blur-sm">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <i data-lucide="file-code-2" class="text-accent w-6 h-6"></i>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-300 to-sky-400">Python Flask</h1>
+          </div>
+          <p class="text-xs text-muted">Guia introdutório com base prática</p>
+        </div>
+        <button onclick="closeSidebar()" class="rounded-lg p-2 text-muted hover:text-white transition md:hidden"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto p-4 space-y-3">
+      <div class="nav-group open rounded-xl border border-white/5 bg-base/20" data-group="inicio">
+        <button type="button" onclick="toggleNavGroup('inicio')" class="nav-group-toggle flex w-full items-center justify-between px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted transition hover:text-white">
+          <span class="flex items-center gap-2"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Início</span>
+          <i data-lucide="chevron-down" class="chevron w-4 h-4"></i>
+        </button>
+        <div class="nav-group-content">
+          <div class="nav-group-inner px-2 pb-2 space-y-1">
+            <button onclick="showStep('step-intro')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 active group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">0</span><span>Introdução</span></button>
+            <button onclick="showStep('step-requirements')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">1</span><span>Requisitos</span></button>
+            <button onclick="showStep('step-flask-core')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">2</span><span>O que é Flask</span></button>
+            <button onclick="showStep('step-first-setup')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">3</span><span>Primeiro setup</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-group open rounded-xl border border-white/5 bg-base/20" data-group="routes">
+        <button type="button" onclick="toggleNavGroup('routes')" class="nav-group-toggle flex w-full items-center justify-between px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted transition hover:text-white">
+          <span class="flex items-center gap-2"><i data-lucide="route" class="w-3.5 h-3.5"></i> Rotas Flask</span>
+          <i data-lucide="chevron-down" class="chevron w-4 h-4"></i>
+        </button>
+        <div class="nav-group-content">
+          <div class="nav-group-inner px-2 pb-2 space-y-1">
+            <button onclick="showStep('step-routes-basic')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">4</span><span>Rotas básicas</span></button>
+            <button onclick="showStep('step-routes-params')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">5</span><span>Parâmetros</span></button>
+            <button onclick="showStep('step-routes-templates')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">6</span><span>Templates</span></button>
+            <button onclick="showStep('step-routes-methods')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">7</span><span>Métodos HTTP</span></button>
+            <button onclick="showStep('step-routes-api')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">8</span><span>Rotas de API</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-group open rounded-xl border border-white/5 bg-base/20" data-group="libs">
+        <button type="button" onclick="toggleNavGroup('libs')" class="nav-group-toggle flex w-full items-center justify-between px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted transition hover:text-white">
+          <span class="flex items-center gap-2"><i data-lucide="library" class="w-3.5 h-3.5"></i> Bibliotecas</span>
+          <i data-lucide="chevron-down" class="chevron w-4 h-4"></i>
+        </button>
+        <div class="nav-group-content">
+          <div class="nav-group-inner px-2 pb-2 space-y-1">
+            <button onclick="showStep('step-libraries')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">9</span><span>10 mais usadas</span></button>
+            <button onclick="showStep('step-setup')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">10</span><span>Setup inicial</span></button>
+            <button onclick="showStep('step-examples')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">11</span><span>Exemplos</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-group open rounded-xl border border-white/5 bg-base/20" data-group="fechamento">
+        <button type="button" onclick="toggleNavGroup('fechamento')" class="nav-group-toggle flex w-full items-center justify-between px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted transition hover:text-white">
+          <span class="flex items-center gap-2"><i data-lucide="target" class="w-3.5 h-3.5"></i> Fechamento</span>
+          <i data-lucide="chevron-down" class="chevron w-4 h-4"></i>
+        </button>
+        <div class="nav-group-content">
+          <div class="nav-group-inner px-2 pb-2 space-y-1">
+            <button onclick="showStep('step-summary')" class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 group"><span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">12</span><span>Resumo</span></button>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="flex-1 min-w-0 h-screen overflow-y-auto relative scroll-smooth">
+    <header class="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-base/80 px-4 py-3 backdrop-blur md:hidden">
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.18em] text-muted">Tutorial</p>
+        <p class="text-sm font-semibold text-white">Python Flask</p>
+      </div>
+      <button onclick="openSidebar()" class="rounded-lg border border-border bg-card px-3 py-2 text-white transition hover:border-accent hover:text-accent">
+        <span class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide"><i data-lucide="menu" class="w-4 h-4"></i> Menu</span>
+      </button>
+    </header>
+
+    <div class="px-4 py-6 md:px-8 md:py-10 xl:px-8">
+      <div class="w-full max-w-[104rem] mx-auto">
+        <section class="min-w-0 w-full">
+          <div id="step-intro" class="step-content active space-y-8">
+            <div class="border-b border-border pb-6">
+              <span class="text-accent text-sm font-bold tracking-wider uppercase flex items-center gap-2 mb-2"><span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span> Módulo Inicial</span>
+              <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-4">Introdução ao Python com Flask</h2>
+              <p class="text-lg text-muted leading-8 max-w-4xl">Python é uma linguagem conhecida pela sintaxe clara, produtividade e enorme ecossistema. Flask é um microframework web leve que permite criar APIs, sistemas web e protótipos com rapidez e boa organização.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-6">
+              <div class="p-6 rounded-2xl soft-card bg-card border border-border"><div class="w-11 h-11 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4"><i data-lucide="cpu" class="text-emerald-300"></i></div><h3 class="text-lg font-semibold mb-2 text-white">Por que Python?</h3><p class="text-sm text-muted leading-7">É simples de ler, ótimo para iniciantes e forte em web, automação, dados, IA e scripts.</p></div>
+              <div class="p-6 rounded-2xl soft-card bg-card border border-border"><div class="w-11 h-11 rounded-xl bg-sky-500/20 flex items-center justify-center mb-4"><i data-lucide="rocket" class="text-sky-300"></i></div><h3 class="text-lg font-semibold mb-2 text-white">Por que Flask?</h3><p class="text-sm text-muted leading-7">É leve, flexível e excelente para aprender como uma aplicação web funciona sem excesso de abstração.</p></div>
+              <div class="p-6 rounded-2xl soft-card bg-card border border-border"><div class="w-11 h-11 rounded-xl bg-violet-500/20 flex items-center justify-center mb-4"><i data-lucide="app-window" class="text-violet-300"></i></div><h3 class="text-lg font-semibold mb-2 text-white">Onde usar</h3><p class="text-sm text-muted leading-7">APIs REST, dashboards internos, autenticação, MVPs, painéis administrativos e automações web.</p></div>
+            </div>
+            <div>
+              <button type="button" class="learn-more-btn" data-info-title="Por que Flask é tão usado?" data-info-content="<p><strong>Flask é leve, mas não limitado.</strong> Ele começa pequeno e cresce bem com extensões, o que faz dele uma ótima ferramenta para estudar e também para projetos reais.</p><p>Você controla melhor a estrutura da aplicação, entende rotas, requests, responses, templates e APIs com menos abstração escondida.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>✨</span><span>Saiba mais</span></button>
+            </div>
+
+            <div class="flex justify-end">
+              <button onclick="showStep('step-requirements')" class="bg-accent hover:bg-emerald-600 text-white px-8 py-4 rounded-xl font-bold transition flex items-center gap-2">Ver requisitos <i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+            </div>
+          </div>
+
+          <div id="step-requirements" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-mono font-bold border border-accent/20">PASSO 1</span></div>
+              <h2 class="text-3xl font-bold text-white">Requisitos para começar</h2>
+              <p class="text-muted mt-2 leading-7">Antes de construir qualquer app em Flask, vale organizar o ambiente corretamente.</p>
+            </div>
+            <div class="grid lg:grid-cols-3 gap-6">
+              <div class="rounded-2xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 to-green-500/5 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <span class="inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300">Base</span>
+                  <span class="text-xl">🐍</span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">Essencial</h3>
+                <div class="space-y-3 text-sm text-muted leading-7">
+                  <p><strong class="text-white">Python 3 instalado</strong> para rodar a aplicação e as dependências.</p>
+                  <p><strong class="text-white">Editor preparado</strong> como VS Code ou PyCharm.</p>
+                  <p><strong class="text-white">Terminal</strong> para instalar pacotes e iniciar o servidor.</p>
+                  <p><strong class="text-white">Fundamentos de Python</strong> como variáveis, funções e módulos.</p>
+                </div>
+              </div>
+              <div class="rounded-2xl border border-sky-400/20 bg-gradient-to-br from-sky-500/10 to-cyan-500/5 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <span class="inline-flex items-center rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-sky-300">Web</span>
+                  <span class="text-xl">🌐</span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">Ajuda muito</h3>
+                <div class="space-y-3 text-sm text-muted leading-7">
+                  <p><strong class="text-white">Ambiente virtual com venv</strong> para isolar o projeto.</p>
+                  <p><strong class="text-white">pip</strong> para instalar Flask e extensões.</p>
+                  <p><strong class="text-white">Noções de HTTP</strong> para entender request, response e rotas.</p>
+                  <p><strong class="text-white">Git</strong> para versionamento desde o começo.</p>
+                </div>
+              </div>
+              <div class="rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/5 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <span class="inline-flex items-center rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-violet-300">Mentalidade</span>
+                  <span class="text-xl">🚀</span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">O jeito Flask de aprender</h3>
+                <div class="space-y-3 text-sm text-muted leading-7">
+                  <p>Flask funciona muito bem para quem quer aprender <strong class="text-white">passo a passo</strong>.</p>
+                  <p>Você começa com o essencial e adiciona recursos conforme a necessidade.</p>
+                  <p>É uma ótima forma de entender <strong class="text-white">como a web funciona por dentro</strong>.</p>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-border bg-card p-6 md:p-8">
+              <div class="flex flex-wrap items-center gap-3 mb-4">
+                <span class="inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">✅ Python</span>
+                <span class="inline-flex items-center rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-300">✅ Editor</span>
+                <span class="inline-flex items-center rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">✅ Terminal</span>
+                <span class="inline-flex items-center rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-300">✅ Git</span>
+                <span class="inline-flex items-center rounded-full border border-pink-400/20 bg-pink-500/10 px-3 py-1 text-xs font-semibold text-pink-300">✅ HTTP</span>
+              </div>
+              <p class="text-sm text-muted leading-8">Com esse kit inicial, Flask fica muito confortável para estudar APIs, páginas simples, formulários e primeiros backends reais sem excesso de complexidade.</p>
+            </div>
+            <div>
+              <button type="button" class="learn-more-btn" data-info-title="Ambiente virtual na prática" data-info-content="<p><strong>O ambiente virtual isola as dependências do projeto.</strong> Isso evita conflito entre versões de bibliotecas usadas em projetos diferentes.</p><p>Em Python, essa organização é quase obrigatória quando o projeto começa a crescer ou vai para produção.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🧪</span><span>Saiba mais</span></button>
+            </div>
+            <div class="flex justify-between pt-4">
+              <button onclick="showStep('step-intro')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button>
+              <button onclick="showStep('step-flask-core')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: Flask <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <div id="step-flask-core" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-sky-500/10 text-sky-300 text-xs font-mono font-bold border border-sky-500/20">PASSO 2</span></div>
+              <h2 class="text-3xl font-bold text-white">O que é Flask na prática</h2>
+              <p class="text-muted mt-2 leading-7">Flask é um microframework em Python para criar aplicações web. Ele entrega o essencial para rotas, requisições e respostas, e deixa você decidir quais bibliotecas adicionais usar.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-4">
+              <div class="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-5">
+                <p class="text-xs font-mono uppercase tracking-[0.18em] text-emerald-300">📁 Diretório</p>
+                <h3 class="mt-2 text-lg font-semibold text-white">Pasta do projeto</h3>
+                <p class="mt-2 text-sm text-muted leading-7">Crie uma pasta como <code>meu-projeto-flask</code> e abra esse diretório no editor antes de começar.</p>
+              </div>
+              <div class="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-5">
+                <p class="text-xs font-mono uppercase tracking-[0.18em] text-sky-300">📄 Arquivo</p>
+                <h3 class="mt-2 text-lg font-semibold text-white">Nome do arquivo</h3>
+                <p class="mt-2 text-sm text-muted leading-7">Salve o primeiro exemplo em um arquivo chamado <code>app.py</code> na raiz do projeto.</p>
+              </div>
+              <div class="rounded-2xl border border-violet-400/20 bg-violet-500/10 p-5">
+                <p class="text-xs font-mono uppercase tracking-[0.18em] text-violet-300">▶️ Execução</p>
+                <h3 class="mt-2 text-lg font-semibold text-white">Comando esperado</h3>
+                <p class="mt-2 text-sm text-muted leading-7">Com o terminal aberto nessa mesma pasta, rode <code>flask --app app run --debug</code>.</p>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-border bg-card p-5 md:p-6">
+              <p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Estrutura sugerida</p>
+              <div class="mt-3 rounded-xl border border-border bg-base/60 p-4">
+                <pre><code>meu-projeto-flask/
+└── app.py</code></pre>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Arquivo app.py do primeiro app Flask">
+              <div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4">
+                <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Arquivo principal</p><h3 class="mt-1 text-lg font-semibold text-white">app.py com Hello World</h3></div>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+                  <button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button>
+                </div>
+              </div>
+              <div class="p-5">
+                <pre><code><span class="py-key">from</span> flask <span class="py-key">import</span> Flask
+
+app = <span class="py-fn">Flask</span>(<span class="py-str">__name__</span>)
+
+@app.route(<span class="py-str">"/"</span>)
+<span class="py-key">def</span> <span class="py-fn">home</span>():
+    <span class="py-key">return</span> <span class="py-str">"Ola, Flask!"</span>
+
+<span class="py-key">if</span> __name__ == <span class="py-str">"__main__"</span>:
+    app.run(debug=<span class="py-key">True</span>)</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <button type="button" class="learn-more-btn" data-info-title="Como ler esse primeiro exemplo?" data-info-content="<p><strong>Pense nele em três partes.</strong> Primeiro importamos o Flask, depois criamos o objeto principal da aplicação e por fim definimos uma rota para a página inicial.</p><p>Quando esse código está salvo em <code>app.py</code> e você executa o comando na pasta do projeto, o Flask sobe um servidor local para testar no navegador.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🧭</span><span>Saiba mais</span></button>
+            </div>
+
+            <div class="flex justify-between pt-4">
+              <button onclick="showStep('step-requirements')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button>
+              <button onclick="showStep('step-first-setup')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: primeiro setup <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <div id="step-first-setup" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 text-xs font-mono font-bold border border-emerald-500/20">PASSO 3</span></div>
+              <h2 class="text-3xl font-bold text-white">Primeiro setup do Flask</h2>
+              <p class="text-muted mt-2 leading-7">Aqui o ambiente deixa de ser abstrato e vira projeto de verdade. A ideia é preparar a base com calma: isolar dependências, instalar o Flask e deixar tudo pronto para começar a rodar a aplicação.</p>
+            </div>
+
+            <div class="command-header">
+              <div>
+                <p class="text-xs font-mono uppercase tracking-[0.18em] text-emerald-300">Sequência guiada</p>
+                <h3 class="mt-1 text-xl font-semibold text-white">🧪 Preparando o ambiente Flask passo a passo</h3>
+                <p class="mt-2 text-sm text-muted leading-7">Cada etapa fica separada para facilitar leitura, cópia e execução sem confusão, principalmente para quem está começando.</p>
+              </div>
+              <div class="command-actions">
+                <button type="button" onclick="copyInlineCommand('python -m venv venv&#10;venv\\Scripts\\activate&#10;pip install flask python-dotenv&#10;pip freeze > requirements.txt&#10;flask --app app run --debug', this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar tudo</span></button>
+                <button type="button" class="learn-more-btn" data-info-title="Por que esse setup inicial funciona bem?" data-info-content="<p><strong>Essa sequência cria uma base limpa para o projeto.</strong> Primeiro você isola o ambiente, depois instala só o essencial, registra as dependências e por fim sobe o servidor.</p><p>Esse fluxo reduz erro, ajuda no versionamento e deixa o projeto muito mais profissional desde o começo.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>✨</span><span>Saiba mais</span></button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div class="command-step">
+                <span class="command-badge">🐍 Passo 1</span>
+                <div><h3 class="text-lg font-semibold text-white">Criar a venv</h3><p class="mt-2 text-sm text-muted leading-7">O ambiente virtual evita conflito entre bibliotecas de projetos diferentes.</p></div>
+                <pre><code>python -m venv venv</code></pre>
+                <button type="button" onclick="copyInlineCommand('python -m venv venv', this)" class="code-action-btn w-full justify-center"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+              </div>
+              <div class="command-step">
+                <span class="command-badge">⚡ Passo 2</span>
+                <div><h3 class="text-lg font-semibold text-white">Ativar a venv</h3><p class="mt-2 text-sm text-muted leading-7">Depois de ativar, os pacotes instalados ficam presos ao ambiente do projeto.</p></div>
+                <pre><code>venv\Scripts\activate</code></pre>
+                <button type="button" onclick="copyInlineCommand('venv\\Scripts\\activate', this)" class="code-action-btn w-full justify-center"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+              </div>
+              <div class="command-step">
+                <span class="command-badge">📦 Passo 3</span>
+                <div><h3 class="text-lg font-semibold text-white">Instalar Flask</h3><p class="mt-2 text-sm text-muted leading-7">Aqui entram o framework principal e o `python-dotenv` para variáveis de ambiente.</p></div>
+                <pre><code>pip install flask python-dotenv</code></pre>
+                <button type="button" onclick="copyInlineCommand('pip install flask python-dotenv', this)" class="code-action-btn w-full justify-center"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+              </div>
+              <div class="command-step">
+                <span class="command-badge">🧾 Passo 4</span>
+                <div><h3 class="text-lg font-semibold text-white">Salvar dependências</h3><p class="mt-2 text-sm text-muted leading-7">O `requirements.txt` ajuda outra pessoa ou outro servidor a reproduzir o mesmo ambiente.</p></div>
+                <pre><code>pip freeze &gt; requirements.txt</code></pre>
+                <button type="button" onclick="copyInlineCommand('pip freeze > requirements.txt', this)" class="code-action-btn w-full justify-center"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+              </div>
+              <div class="command-step">
+                <span class="command-badge">🚀 Passo 5</span>
+                <div><h3 class="text-lg font-semibold text-white">Rodar o app</h3><p class="mt-2 text-sm text-muted leading-7">Com um arquivo `app.py` criado, esse comando já sobe o servidor em modo de desenvolvimento.</p></div>
+                <pre><code>flask --app app run --debug</code></pre>
+                <button type="button" onclick="copyInlineCommand('flask --app app run --debug', this)" class="code-action-btn w-full justify-center"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+              </div>
+            </div>
+
+            <div class="flex justify-between pt-4">
+              <button onclick="showStep('step-flask-core')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button>
+              <button onclick="showStep('step-routes-basic')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: rotas <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <div id="step-routes-basic" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 text-xs font-mono font-bold border border-emerald-500/20">PASSO 4</span></div>
+              <h2 class="text-3xl font-bold text-white">Rotas Básicas</h2>
+              <p class="text-muted mt-2 leading-7">Aqui começa o coração do Flask: o decorador <code>@app.route</code>. É ele que liga uma URL a uma função Python.</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="rounded-2xl border border-border bg-card p-6"><h3 class="text-xl font-bold text-white mb-4">Ideia central</h3><p class="text-sm text-muted leading-7">Quando alguém acessa uma rota como <code>/</code>, Flask executa a função associada e devolve uma resposta.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-6"><h3 class="text-xl font-bold text-white mb-4">Uso típico</h3><p class="text-sm text-muted leading-7">É o primeiro passo para criar páginas, APIs, painéis e endpoints internos.</p></div>
+            </div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Rota basica Flask">
+              <div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4">
+                <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">O início</p><h3 class="mt-1 text-lg font-semibold text-white">Hello World</h3></div>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+                  <button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button>
+                </div>
+              </div>
+              <div class="p-5"><pre><code>@app.route(<span class="py-str">"/"</span>)
+<span class="py-key">def</span> <span class="py-fn">home</span>():
+    <span class="py-key">return</span> <span class="py-str">"Hello World"</span></code></pre></div>
+            </div>
+            <div>
+              <button type="button" class="learn-more-btn" data-info-title="Entendendo o decorador @app.route" data-info-content="<p><strong>O decorador conecta a URL à função.</strong> Quando o navegador acessa a rota indicada, Flask executa aquela função e devolve o resultado.</p><p>Esse padrão aparece o tempo todo: em páginas simples, páginas com formulário e rotas de API.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🚀</span><span>Saiba mais</span></button>
+            </div>
+            <div class="flex justify-between pt-4">
+              <button onclick="showStep('step-flask-core')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button>
+              <button onclick="showStep('step-routes-params')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: parâmetros <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <div id="step-routes-params" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-sky-500/10 text-sky-300 text-xs font-mono font-bold border border-sky-500/20">PASSO 5</span></div>
+              <h2 class="text-3xl font-bold text-white">Rotas com Parâmetros</h2>
+              <p class="text-muted mt-2 leading-7">Flask permite capturar partes da URL como variáveis. Isso é útil para perfis, produtos, categorias e páginas dinâmicas.</p>
+            </div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Rotas dinamicas Flask">
+              <div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4">
+                <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">URLs dinâmicas</p><h3 class="mt-1 text-lg font-semibold text-white">Parâmetros na rota</h3></div>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+                  <button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button>
+                </div>
+              </div>
+              <div class="p-5"><pre><code>@app.route(<span class="py-str">"/usuario/&lt;nome&gt;"</span>)
+<span class="py-key">def</span> <span class="py-fn">usuario</span>(nome):
+    <span class="py-key">return</span> <span class="py-str">f"Usuario: {nome}"</span>
+
+@app.route(<span class="py-str">"/produto/&lt;int:id&gt;"</span>)
+<span class="py-key">def</span> <span class="py-fn">produto</span>(id):
+    <span class="py-key">return</span> <span class="py-str">f"Produto {id}"</span></code></pre></div>
+            </div>
+            <div>
+              <button type="button" class="learn-more-btn" data-info-title="Quando usar parâmetros na URL" data-info-content="<p><strong>Parâmetros deixam a aplicação dinâmica.</strong> Eles são ideais para páginas de usuário, detalhes de produto, edição por ID e filtros por categoria.</p><p>O Flask ainda permite validadores como <code>int</code>, o que ajuda a restringir o tipo esperado diretamente na rota.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🧭</span><span>Saiba mais</span></button>
+            </div>
+            <div class="flex justify-between pt-4">
+              <button onclick="showStep('step-routes-basic')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button>
+              <button onclick="showStep('step-routes-templates')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: templates <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <div id="step-routes-templates" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-violet-500/10 text-violet-300 text-xs font-mono font-bold border border-violet-500/20">PASSO 6</span></div>
+              <h2 class="text-3xl font-bold text-white">Rotas com Templates</h2>
+              <p class="text-muted mt-2 leading-7">Quando a rota precisa renderizar uma página HTML, usamos <code>render_template</code> com o motor Jinja2.</p>
+            </div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Render template Flask">
+              <div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4">
+                <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Páginas web</p><h3 class="mt-1 text-lg font-semibold text-white">render_template</h3></div>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+                  <button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button>
+                </div>
+              </div>
+              <div class="p-5"><pre><code><span class="py-key">from</span> flask <span class="py-key">import</span> render_template
+
+@app.route(<span class="py-str">"/perfil"</span>)
+<span class="py-key">def</span> <span class="py-fn">perfil</span>():
+    <span class="py-key">return</span> <span class="py-fn">render_template</span>(<span class="py-str">"perfil.html"</span>, nome=<span class="py-str">"Ana"</span>)</code></pre></div>
+            </div>
+            <div>
+              <button type="button" class="learn-more-btn" data-info-title="Templates e Jinja2" data-info-content="<p><strong>Jinja2 permite inserir variáveis e lógica leve no HTML.</strong> Assim, você consegue renderizar páginas personalizadas com dados vindos do Flask.</p><p>Isso é ótimo para dashboards, páginas administrativas e sistemas internos onde servidor e front estão no mesmo projeto.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🎨</span><span>Saiba mais</span></button>
+            </div>
+            <div class="flex justify-between pt-4">
+              <button onclick="showStep('step-routes-params')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button>
+              <button onclick="showStep('step-routes-methods')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: métodos HTTP <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <div id="step-routes-methods" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 text-xs font-mono font-bold border border-amber-500/20">PASSO 7</span></div>
+              <h2 class="text-3xl font-bold text-white">Rotas com Métodos HTTP</h2>
+              <p class="text-muted mt-2 leading-7">Uma mesma rota pode responder de forma diferente conforme o método HTTP, como <code>GET</code>, <code>POST</code>, <code>PUT</code> ou <code>DELETE</code>.</p>
+            </div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Metodos HTTP Flask">
+              <div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4">
+                <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Formulários e ações</p><h3 class="mt-1 text-lg font-semibold text-white">GET e POST</h3></div>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+                  <button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button>
+                </div>
+              </div>
+              <div class="p-5"><pre><code><span class="py-key">from</span> flask <span class="py-key">import</span> request
+
+@app.route(<span class="py-str">"/contato"</span>, methods=[<span class="py-str">"GET"</span>, <span class="py-str">"POST"</span>])
+<span class="py-key">def</span> <span class="py-fn">contato</span>():
+    <span class="py-key">if</span> request.method == <span class="py-str">"POST"</span>:
+        <span class="py-key">return</span> <span class="py-str">"Formulario enviado"</span>
+    <span class="py-key">return</span> <span class="py-str">"Pagina do formulario"</span></code></pre></div>
+            </div>
+            <div>
+              <button type="button" class="learn-more-btn" data-info-title="Diferença entre GET e POST" data-info-content="<p><strong>GET normalmente busca ou exibe dados.</strong> POST costuma enviar dados novos para o servidor, como formulários, login ou cadastro.</p><p>Na prática, entender essa diferença é essencial para construir telas com interação real e APIs bem organizadas.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>📬</span><span>Saiba mais</span></button>
+            </div>
+            <div class="flex justify-between pt-4">
+              <button onclick="showStep('step-routes-templates')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button>
+              <button onclick="showStep('step-routes-api')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: rotas de API <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <div id="step-routes-api" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-pink-500/10 text-pink-300 text-xs font-mono font-bold border border-pink-500/20">PASSO 8</span></div>
+              <h2 class="text-3xl font-bold text-white">Rotas de API com JSON</h2>
+              <p class="text-muted mt-2 leading-7">Quando a rota vai servir dados para FlutterFlow, React, mobile ou outro frontend, o retorno ideal costuma ser JSON com <code>jsonify</code>.</p>
+            </div>
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="API JSON Flask">
+              <div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4">
+                <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">API</p><h3 class="mt-1 text-lg font-semibold text-white">jsonify</h3></div>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+                  <button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button>
+                </div>
+              </div>
+              <div class="p-5"><pre><code><span class="py-key">from</span> flask <span class="py-key">import</span> jsonify
+
+@app.route(<span class="py-str">"/api/produtos"</span>)
+<span class="py-key">def</span> <span class="py-fn">produtos_api</span>():
+    <span class="py-key">return</span> <span class="py-fn">jsonify</span>({
+        <span class="py-str">"status"</span>: <span class="py-str">"ok"</span>,
+        <span class="py-str">"dados"</span>: [
+            {<span class="py-str">"id"</span>: 1, <span class="py-str">"nome"</span>: <span class="py-str">"Notebook"</span>},
+            {<span class="py-str">"id"</span>: 2, <span class="py-str">"nome"</span>: <span class="py-str">"Mouse"</span>}
+        ]
+    })</code></pre></div>
+            </div>
+            <div>
+              <button type="button" class="learn-more-btn" data-info-title="Por que JSON é tão importante?" data-info-content="<p><strong>JSON virou o formato padrão de troca de dados entre front-end e back-end.</strong> É simples, leve e muito compatível com apps web, mobile e ferramentas como FlutterFlow.</p><p>Quando sua rota retorna JSON, ela deixa de ser uma página e passa a funcionar como serviço de dados.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>📦</span><span>Saiba mais</span></button>
+            </div>
+            <div class="flex justify-between pt-4">
+              <button onclick="showStep('step-routes-methods')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button>
+              <button onclick="showStep('step-libraries')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: bibliotecas <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <div id="step-libraries" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-violet-500/10 text-violet-300 text-xs font-mono font-bold border border-violet-500/20">PASSO 9</span></div>
+              <h2 class="text-3xl font-bold text-white">10 bibliotecas muito usadas com Python Flask</h2>
+              <p class="text-muted mt-2 leading-7">Essas bibliotecas aparecem com frequência em APIs, autenticação, banco de dados, validação e deploy.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">1. Flask</p><p class="text-sm text-muted mt-2">Framework principal.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">2. Flask-SQLAlchemy</p><p class="text-sm text-muted mt-2">ORM para banco.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">3. Flask-Migrate</p><p class="text-sm text-muted mt-2">Migrações de banco.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">4. Flask-Login</p><p class="text-sm text-muted mt-2">Autenticação de sessão.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">5. Flask-JWT-Extended</p><p class="text-sm text-muted mt-2">JWT para APIs.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">6. python-dotenv</p><p class="text-sm text-muted mt-2">Variáveis de ambiente.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">7. requests</p><p class="text-sm text-muted mt-2">Consumir APIs externas.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">8. marshmallow</p><p class="text-sm text-muted mt-2">Serialização e validação.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">9. gunicorn</p><p class="text-sm text-muted mt-2">Servidor para deploy.</p></div>
+              <div class="rounded-2xl border border-border bg-card p-5"><p class="text-white font-semibold">10. pytest</p><p class="text-sm text-muted mt-2">Testes automatizados.</p></div>
+            </div>
+            <div>
+              <button type="button" class="learn-more-btn" data-info-title="Como escolher bibliotecas no Flask" data-info-content="<p><strong>Comece pequeno e adicione só o que o projeto realmente pede.</strong> Flask funciona muito bem quando você monta o stack por necessidade, em vez de instalar tudo logo no começo.</p><p>Uma boa combinação inicial costuma ser Flask, python-dotenv, SQLAlchemy e pytest.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🧰</span><span>Saiba mais</span></button>
+            </div>
+            <div class="flex justify-between pt-4">
+              <button onclick="showStep('step-flask-core')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button>
+              <button onclick="showStep('step-setup')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: setup <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <div id="step-setup" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 text-xs font-mono font-bold border border-amber-500/20">PASSO 10</span></div>
+              <h2 class="text-3xl font-bold text-white">Setup inicial do projeto</h2>
+              <p class="text-muted mt-2 leading-7">Esses comandos montam a base de um projeto Flask simples.</p>
+            </div>
+
+            <div class="command-header">
+              <div>
+                <p class="text-xs font-mono uppercase tracking-[0.18em] text-amber-300">Setup guiado</p>
+                <h3 class="mt-1 text-xl font-semibold text-white">⚙️ Ambiente inicial do Flask</h3>
+                <p class="mt-2 text-sm text-muted leading-7">A mesma sequência aparece aqui como referência rápida para consulta, revisão e execução mais tranquila no celular ou no desktop.</p>
+              </div>
+              <div class="command-actions">
+                <button type="button" onclick="copyInlineCommand('python -m venv venv&#10;venv\\Scripts\\activate&#10;pip install flask python-dotenv&#10;pip freeze > requirements.txt&#10;flask --app app run --debug', this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar tudo</span></button>
+                <button type="button" class="learn-more-btn" data-info-title="O que esse setup já resolve?" data-info-content="<p><strong>Ele entrega o básico profissional logo de saída.</strong> Você fica com ambiente isolado, dependências instaladas, arquivo de requisitos pronto e um comando de execução claro.</p><p>Isso já deixa o projeto preparado para evoluir para rotas, templates, banco e deploy depois.</p>" onclick="openInfoModal(this)"><span class='emoji-bounce'>🛠️</span><span>Saiba mais</span></button>
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 xl:grid-cols-5 gap-4">
+              <div class="command-step">
+                <span class="command-badge">🐍 Passo 1</span>
+                <div><h3 class="text-lg font-semibold text-white">Criar a venv</h3><p class="mt-2 text-sm text-muted leading-7">Comece criando um ambiente separado para o projeto.</p></div>
+                <pre><code>python -m venv venv</code></pre>
+                <button type="button" onclick="copyInlineCommand('python -m venv venv', this)" class="code-action-btn w-full justify-center"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+              </div>
+              <div class="command-step">
+                <span class="command-badge">⚡ Passo 2</span>
+                <div><h3 class="text-lg font-semibold text-white">Ativar a venv</h3><p class="mt-2 text-sm text-muted leading-7">Assim os próximos pacotes entram apenas nesse ambiente.</p></div>
+                <pre><code>venv\Scripts\activate</code></pre>
+                <button type="button" onclick="copyInlineCommand('venv\\Scripts\\activate', this)" class="code-action-btn w-full justify-center"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+              </div>
+              <div class="command-step">
+                <span class="command-badge">📦 Passo 3</span>
+                <div><h3 class="text-lg font-semibold text-white">Instalar dependências</h3><p class="mt-2 text-sm text-muted leading-7">Flask e `python-dotenv` já cobrem um começo bem saudável.</p></div>
+                <pre><code>pip install flask python-dotenv</code></pre>
+                <button type="button" onclick="copyInlineCommand('pip install flask python-dotenv', this)" class="code-action-btn w-full justify-center"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+              </div>
+              <div class="command-step">
+                <span class="command-badge">🧾 Passo 4</span>
+                <div><h3 class="text-lg font-semibold text-white">Gerar requirements</h3><p class="mt-2 text-sm text-muted leading-7">Isso ajuda a manter o projeto reproduzível em qualquer máquina.</p></div>
+                <pre><code>pip freeze &gt; requirements.txt</code></pre>
+                <button type="button" onclick="copyInlineCommand('pip freeze > requirements.txt', this)" class="code-action-btn w-full justify-center"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+              </div>
+              <div class="command-step">
+                <span class="command-badge">🚀 Passo 5</span>
+                <div><h3 class="text-lg font-semibold text-white">Subir servidor</h3><p class="mt-2 text-sm text-muted leading-7">Use esse comando quando o arquivo `app.py` já estiver criado.</p></div>
+                <pre><code>flask --app app run --debug</code></pre>
+                <button type="button" onclick="copyInlineCommand('flask --app app run --debug', this)" class="code-action-btn w-full justify-center"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+              </div>
+            </div>
+
+            <div class="flex justify-between pt-4">
+              <button onclick="showStep('step-libraries')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button>
+              <button onclick="showStep('step-examples')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: exemplos <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <div id="step-examples" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-pink-500/10 text-pink-300 text-xs font-mono font-bold border border-pink-500/20">PASSO 11</span></div>
+              <h2 class="text-3xl font-bold text-white">Exemplos práticos</h2>
+              <p class="text-muted mt-2 leading-7">Depois do hello world, estes são passos naturais de evolução.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-5">
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Exemplo 1</h3><p class="text-sm text-muted leading-7">Criar rota <code>/usuarios</code> retornando JSON.</p></div>
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Exemplo 2</h3><p class="text-sm text-muted leading-7">Conectar Flask a PostgreSQL com SQLAlchemy.</p></div>
+              <div class="bg-card rounded-2xl border border-border p-6"><h3 class="font-bold text-white mb-3">Exemplo 3</h3><p class="text-sm text-muted leading-7">Adicionar login, autenticação JWT e proteção de rotas.</p></div>
+            </div>
+
+            <div class="rounded-2xl border border-border bg-card overflow-hidden" data-code-card data-code-title="Rota JSON em Flask">
+              <div class="flex items-center justify-between gap-4 border-b border-border bg-base/40 px-5 py-4">
+                <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">API</p><h3 class="mt-1 text-lg font-semibold text-white">Retorno JSON</h3></div>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="copyCode(this)" class="code-action-btn"><i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar</span></button>
+                  <button type="button" onclick="expandCode(this)" class="code-action-btn"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i><span>Expandir</span></button>
+                </div>
+              </div>
+              <div class="p-5">
+                <pre><code><span class="py-key">from</span> flask <span class="py-key">import</span> Flask, jsonify
+
+app = <span class="py-fn">Flask</span>(<span class="py-str">__name__</span>)
+
+@app.route(<span class="py-str">"/usuarios"</span>)
+<span class="py-key">def</span> <span class="py-fn">usuarios</span>():
+    <span class="py-key">return</span> <span class="py-fn">jsonify</span>([
+        {<span class="py-str">"id"</span>: 1, <span class="py-str">"nome"</span>: <span class="py-str">"Ana"</span>},
+        {<span class="py-str">"id"</span>: 2, <span class="py-str">"nome"</span>: <span class="py-str">"Carlos"</span>}
+    ])</code></pre>
+              </div>
+            </div>
+
+            <div class="flex justify-between pt-4">
+              <button onclick="showStep('step-setup')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button>
+              <button onclick="showStep('step-summary')" class="bg-card border border-border hover:border-accent hover:text-accent text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Próximo: resumo <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <div id="step-summary" class="step-content space-y-8">
+            <div class="border-b border-border pb-6">
+              <div class="flex items-center gap-3 mb-2"><span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 text-xs font-mono font-bold border border-emerald-500/20">PASSO 12</span></div>
+              <h2 class="text-3xl font-bold text-white">Resumo final</h2>
+              <p class="text-muted mt-2 leading-7">Fechamento rápido para revisão e referência.</p>
+            </div>
+            <div class="rounded-2xl border border-border bg-card p-6 md:p-8">
+              <div class="space-y-5 text-sm text-muted leading-8">
+                <p><strong class="text-white">Python</strong> é uma linguagem produtiva, clara e versátil.</p>
+                <p><strong class="text-white">Flask</strong> é uma forma leve de aprender e construir aplicações web.</p>
+                <p><strong class="text-white">Requisitos básicos</strong> incluem Python, editor, terminal e noções iniciais de programação.</p>
+                <p><strong class="text-white">Bibliotecas importantes</strong> ajudam em banco, autenticação, testes, variáveis de ambiente e deploy.</p>
+                <p><strong class="text-white">Próximo passo ideal</strong> é criar uma API simples conectada a banco e versionar o projeto.</p>
+              </div>
+            </div>
+            <div class="flex justify-between pt-4 pb-20">
+              <button onclick="showStep('step-examples')" class="text-muted hover:text-white px-4 py-2 text-sm flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</button>
+              <button onclick="showStep('step-intro')" class="bg-accent hover:bg-emerald-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">Voltar ao início <i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <div id="code-expand-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="code-expand-title">
+    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeCodeModal()"></div>
+    <div class="relative z-10 flex min-h-screen items-center justify-center p-4 md:p-8">
+      <div class="w-full max-w-5xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+        <div class="flex items-center justify-between gap-4 border-b border-border bg-base/70 px-5 py-4">
+          <div><p class="text-xs font-mono uppercase tracking-[0.18em] text-muted">Visualizacao ampliada</p><h3 id="code-expand-title" class="mt-1 text-lg font-semibold text-white">Codigo</h3></div>
+          <button type="button" onclick="closeCodeModal()" class="code-action-btn"><i data-lucide="x" class="w-3.5 h-3.5"></i><span>Fechar</span></button>
+        </div>
+        <div class="max-h-[75vh] overflow-auto p-5"><pre class="!m-0"><code id="code-expand-content"></code></pre></div>
+      </div>
+    </div>
+  </div>
+  <div id="info-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="info-modal-title">
+    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeInfoModal()"></div>
+    <div class="relative z-10 flex min-h-screen items-center justify-center p-4 md:p-8">
+      <div id="info-modal-shell" class="modal-shell w-full max-w-3xl overflow-hidden rounded-3xl border border-emerald-400/20 bg-card shadow-2xl">
+        <div class="flex items-center justify-between gap-4 border-b border-border bg-gradient-to-r from-emerald-500/10 to-sky-500/10 px-6 py-5">
+          <div>
+            <p class="text-xs font-mono uppercase tracking-[0.18em] text-emerald-300">Saiba Mais</p>
+            <h3 id="info-modal-title" class="mt-1 text-xl font-semibold text-white">Detalhes</h3>
+          </div>
+          <button type="button" onclick="closeInfoModal()" class="code-action-btn"><i data-lucide="x" class="w-3.5 h-3.5"></i><span>Fechar</span></button>
+        </div>
+        <div class="p-6 md:p-8">
+          <div id="info-modal-content" class="prose-modal text-sm md:text-base"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const drawer = document.getElementById('sidebar-drawer');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    const codeExpandModal = document.getElementById('code-expand-modal');
+    const codeExpandTitle = document.getElementById('code-expand-title');
+    const codeExpandContent = document.getElementById('code-expand-content');
+    const infoModal = document.getElementById('info-modal');
+    const infoModalShell = document.getElementById('info-modal-shell');
+    const infoModalTitle = document.getElementById('info-modal-title');
+    const infoModalContent = document.getElementById('info-modal-content');
+    function openSidebar() { drawer.classList.add('open'); backdrop.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+    function closeSidebar() { drawer.classList.remove('open'); backdrop.classList.add('hidden'); document.body.style.overflow = ''; }
+    function toggleNavGroup(groupName) { const group = document.querySelector(`[data-group="${groupName}"]`); if (!group) return; group.classList.toggle('open'); }
+    function syncActiveButtons(stepId) { document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active')); const leftBtn = document.querySelector(`button[onclick="showStep('${stepId}')"].nav-item`); if (leftBtn) leftBtn.classList.add('active'); }
+    function showStep(stepId) { document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active')); const content = document.getElementById(stepId); if (!content) return; content.classList.remove('active'); void content.offsetWidth; content.classList.add('active'); syncActiveButtons(stepId); document.querySelector('main').scrollTop = 0; if (window.innerWidth < 768) closeSidebar(); }
+    async function writeClipboardText(text) {
+      if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; }
+      const helper = document.createElement('textarea');
+      helper.value = text;
+      helper.setAttribute('readonly', '');
+      helper.style.position = 'fixed';
+      helper.style.opacity = '0';
+      document.body.appendChild(helper);
+      helper.select();
+      let copied = false;
+      try { copied = document.execCommand('copy'); } finally { document.body.removeChild(helper); }
+      return copied;
+    }
+    async function copyCode(button) {
+      const card = button.closest('[data-code-card]');
+      const code = card?.querySelector('code');
+      const label = button.querySelector('span');
+      if (!code || !label) return;
+      const originalLabel = label.textContent;
+      const source = code.textContent.replace(/\u00a0/g, ' ').trim();
+      try {
+        const copied = await writeClipboardText(source);
+        label.textContent = copied ? 'Copiado' : 'Falhou';
+      } catch (error) {
+        label.textContent = 'Falhou';
+      }
+      window.setTimeout(() => { label.textContent = originalLabel; }, 1600);
+    }
+    async function copyInlineCommand(text, button) {
+      const label = button?.querySelector('span');
+      const originalLabel = label?.textContent || 'Copiar';
+      try {
+        const copied = await writeClipboardText(text);
+        if (label) label.textContent = copied ? 'Copiado' : 'Falhou';
+      } catch (error) {
+        if (label) label.textContent = 'Falhou';
+      }
+      window.setTimeout(() => {
+        if (label) label.textContent = originalLabel;
+      }, 1600);
+    }
+    function expandCode(button) {
+      const card = button.closest('[data-code-card]');
+      const code = card?.querySelector('code');
+      if (!card || !code || !codeExpandModal || !codeExpandTitle || !codeExpandContent) return;
+      codeExpandTitle.textContent = card.dataset.codeTitle || 'Codigo';
+      codeExpandContent.innerHTML = code.innerHTML;
+      codeExpandModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeCodeModal() {
+      if (!codeExpandModal || codeExpandModal.classList.contains('hidden')) return;
+      codeExpandModal.classList.add('hidden');
+      codeExpandContent.innerHTML = '';
+      if (!drawer.classList.contains('open')) document.body.style.overflow = '';
+    }
+    function openInfoModal(button) {
+      if (!button || !infoModal || !infoModalShell || !infoModalTitle || !infoModalContent) return;
+      infoModalTitle.textContent = button.dataset.infoTitle || 'Saiba mais';
+      infoModalContent.innerHTML = button.dataset.infoContent || '<p>Sem conteúdo adicional.</p>';
+      infoModal.classList.remove('hidden');
+      requestAnimationFrame(() => infoModalShell.classList.add('open'));
+      document.body.style.overflow = 'hidden';
+    }
+    function closeInfoModal() {
+      if (!infoModal || infoModal.classList.contains('hidden')) return;
+      infoModalShell.classList.remove('open');
+      window.setTimeout(() => {
+        infoModal.classList.add('hidden');
+        infoModalContent.innerHTML = '';
+        if (!drawer.classList.contains('open') && (codeExpandModal?.classList.contains('hidden') ?? true)) {
+          document.body.style.overflow = '';
+        }
+      }, 220);
+    }
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        if (infoModal && !infoModal.classList.contains('hidden')) { closeInfoModal(); return; }
+        if (codeExpandModal && !codeExpandModal.classList.contains('hidden')) { closeCodeModal(); return; }
+        closeSidebar();
+      }
+    });
+    syncActiveButtons('step-intro');
+  </script>
+</body>
+</html>
